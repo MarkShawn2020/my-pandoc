@@ -1,0 +1,169 @@
+#!/bin/bash
+
+# Pandoc with automatic emoji support
+# 可以在任何路径直接使用的 pandoc emoji 转换器
+
+# 获取脚本所在目录
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+# 显示帮助信息
+show_help() {
+    cat << EOF
+Pandoc Emoji Converter - 带自动 emoji 支持的 pandoc 转换器
+
+用法: pandoc-emoji <markdown_file> [options]
+
+参数:
+    <markdown_file>     要转换的 markdown 文件路径
+    
+选项:
+    -o, --output <dir>  输出目录 (默认: ~/Documents)
+    -t, --title <title> 文档标题 (默认: 使用文件名)
+    -s, --subtitle <subtitle> 副标题 (默认: V0.1)
+    -a, --author <author> 作者 (默认: 南川)
+    -h, --help          显示此帮助信息
+
+示例:
+    pandoc-emoji ~/Downloads/test.md
+    pandoc-emoji test.md -o ~/Desktop -t "我的文档"
+    pandoc-emoji test.md --author "张三" --subtitle "V2.0"
+EOF
+}
+
+# 默认参数
+OUTPUT_DIR="$HOME/Documents"
+SUBTITLE="V0.1"
+AUTHOR="南川"
+TITLE=""
+
+# 解析参数
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        -o|--output)
+            OUTPUT_DIR="$2"
+            shift 2
+            ;;
+        -t|--title)
+            TITLE="$2"
+            shift 2
+            ;;
+        -s|--subtitle)
+            SUBTITLE="$2"
+            shift 2
+            ;;
+        -a|--author)
+            AUTHOR="$2"
+            shift 2
+            ;;
+        -*)
+            echo "未知选项: $1"
+            show_help
+            exit 1
+            ;;
+        *)
+            if [ -z "$FILENAME" ]; then
+                FILENAME="$1"
+            else
+                echo "错误: 只能指定一个输入文件"
+                show_help
+                exit 1
+            fi
+            shift
+            ;;
+    esac
+done
+
+# 检查必需参数
+if [ -z "$FILENAME" ]; then
+    echo "错误: 必须指定输入文件"
+    show_help
+    exit 1
+fi
+
+# 检查文件是否存在
+if [ ! -f "$FILENAME" ]; then
+    echo "错误: 文件 $FILENAME 不存在"
+    exit 1
+fi
+
+# 获取绝对路径
+FILENAME=$(realpath "$FILENAME")
+BASENAME=$(basename "$FILENAME" .md)
+
+# 如果没有指定标题，使用文件名
+if [ -z "$TITLE" ]; then
+    TITLE="$BASENAME"
+fi
+
+# 确保输出目录存在
+mkdir -p "$OUTPUT_DIR"
+OUTPUT_DIR=$(realpath "$OUTPUT_DIR")
+
+# 临时文件
+TEMP_DIR=$(mktemp -d)
+HEADER_FILE="$TEMP_DIR/emoji-header.tex"
+
+# 清理函数
+cleanup() {
+    rm -rf "$TEMP_DIR"
+}
+trap cleanup EXIT
+
+# 生成 emoji 头文件
+echo "🔍 扫描文件中的 emoji..."
+python3 "$SCRIPT_DIR/generate_emoji_header.py" "$FILENAME" "$HEADER_FILE"
+
+if [ $? -ne 0 ]; then
+    echo "❌ 生成 emoji 头文件失败"
+    exit 1
+fi
+
+# 检查必要的工具
+if ! command -v pandoc &> /dev/null; then
+    echo "❌ 未找到 pandoc，请先安装"
+    exit 1
+fi
+
+if ! command -v xelatex &> /dev/null; then
+    echo "❌ 未找到 xelatex，请先安装 LaTeX"
+    exit 1
+fi
+
+# 运行 pandoc
+echo "📝 转换 PDF..."
+pandoc "$FILENAME" \
+    -o "$OUTPUT_DIR/${BASENAME}.pdf" \
+    -M title="$TITLE" \
+    -M subtitle="$SUBTITLE" \
+    -M date="$(date '+%Y-%m-%d')" \
+    -f markdown+wikilinks_title_after_pipe \
+    --template eisvogel \
+    -t pdf \
+    --pdf-engine=xelatex \
+    -V mainfont="Songti SC" \
+    -V CJKmainfont="Songti SC" \
+    -V monofont="Noto Sans Mono CJK SC" \
+    -V sansfont="Noto Sans CJK SC" \
+    -H "$HEADER_FILE" \
+    -M author="$AUTHOR" \
+    -M lang="zh-CN" \
+    -M titlepage=true \
+    -M titlepage-color="5D1EB1" \
+    -M titlepage-text-color="FFFFFF" \
+    -M titlepage-rule-color="FFE600" \
+    -M titlepage-rule-height=2 \
+    -M logo-width="6cm" \
+    -M toc=true \
+    -V documentclass=report -V book -V classoption=openany \
+    2>/dev/null
+
+if [ $? -eq 0 ]; then
+    echo "✅ PDF 生成成功: $OUTPUT_DIR/${BASENAME}.pdf"
+else
+    echo "❌ PDF 生成失败"
+    exit 1
+fi

@@ -1,0 +1,361 @@
+#!/bin/bash
+
+# Pandoc Enhanced - 增强版 pandoc 转换器
+# 支持中文、emoji、多种输出格式和自定义模板
+
+# 获取脚本所在目录
+if [ -L "$0" ]; then
+    # 如果是软链接，获取真实路径
+    SCRIPT_DIR="$( cd "$( dirname "$(readlink "$0")" )" &> /dev/null && pwd )"
+else
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+fi
+
+# 显示帮助信息
+show_help() {
+    cat << EOF
+Pandoc Enhanced - 增强版 pandoc 转换器
+
+用法: pandoc-enhanced <input_file> [options]
+
+支持格式:
+    输入: markdown, org, rst, docx, epub, html 等
+    输出: pdf, docx, html, epub, pptx 等
+
+参数:
+    <input_file>        要转换的文件路径
+    
+基本选项:
+    -f, --format <fmt>  输出格式 (pdf|docx|html|epub|pptx) (默认: pdf)
+    -o, --output <dir>  输出目录 (默认: ~/Documents)
+    -t, --title <title> 文档标题 (默认: 使用文件名)
+    -s, --subtitle <subtitle> 副标题 (默认: V0.1)
+    -a, --author <author> 作者 (默认: 南川)
+    
+高级选项:
+    --template <name>   指定模板 (eisvogel|default|custom)
+    --theme <name>      PDF 主题色 (blue|red|green|purple) (默认: purple)
+    --toc               生成目录 (默认启用)
+    --no-toc            不生成目录
+    --emoji             启用 emoji 支持 (默认启用)
+    --no-emoji          禁用 emoji 支持
+    --lang <lang>       文档语言 (zh-CN|en-US|ja-JP) (默认: zh-CN)
+    
+其他选项:
+    -h, --help          显示此帮助信息
+    -v, --version       显示版本信息
+    --debug             启用调试模式
+
+示例:
+    # 基本 PDF 转换
+    pandoc-enhanced test.md
+    
+    # 转换为 Word 文档
+    pandoc-enhanced test.md -f docx
+    
+    # 自定义输出和样式
+    pandoc-enhanced test.md -o ~/Desktop -t "技术文档" --theme blue
+    
+    # 转换为 HTML 演示文稿
+    pandoc-enhanced test.md -f html --template slides
+    
+    # 英文文档转换
+    pandoc-enhanced readme.md --lang en-US --author "John Doe"
+
+配置文件:
+    ~/.config/pandoc-enhanced/config.yaml - 全局配置
+    .pandoc-enhanced.yaml - 项目配置
+EOF
+}
+
+# 显示版本信息
+show_version() {
+    echo "Pandoc Enhanced v1.0.0"
+    echo "Enhanced pandoc converter with Chinese and emoji support"
+}
+
+# 默认参数
+OUTPUT_DIR="$HOME/Documents"
+FORMAT="pdf"
+SUBTITLE="V0.1"
+AUTHOR="南川"
+TITLE=""
+TEMPLATE="eisvogel"
+THEME="purple"
+TOC=true
+EMOJI=true
+LANG="zh-CN"
+DEBUG=false
+INPUT_FILE=""
+
+# 主题色配置函数
+get_theme_color() {
+    case $1 in
+        "blue") echo "1E88E5" ;;
+        "red") echo "E53935" ;;
+        "green") echo "43A047" ;;
+        "purple") echo "5D1EB1" ;;
+        "orange") echo "FB8C00" ;;
+        "teal") echo "00ACC1" ;;
+        *) echo "5D1EB1" ;;  # 默认紫色
+    esac
+}
+
+# 解析参数
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        -v|--version)
+            show_version
+            exit 0
+            ;;
+        -f|--format)
+            FORMAT="$2"
+            shift 2
+            ;;
+        -o|--output)
+            OUTPUT_DIR="$2"
+            shift 2
+            ;;
+        -t|--title)
+            TITLE="$2"
+            shift 2
+            ;;
+        -s|--subtitle)
+            SUBTITLE="$2"
+            shift 2
+            ;;
+        -a|--author)
+            AUTHOR="$2"
+            shift 2
+            ;;
+        --template)
+            TEMPLATE="$2"
+            shift 2
+            ;;
+        --theme)
+            THEME="$2"
+            shift 2
+            ;;
+        --toc)
+            TOC=true
+            shift
+            ;;
+        --no-toc)
+            TOC=false
+            shift
+            ;;
+        --emoji)
+            EMOJI=true
+            shift
+            ;;
+        --no-emoji)
+            EMOJI=false
+            shift
+            ;;
+        --lang)
+            LANG="$2"
+            shift 2
+            ;;
+        --debug)
+            DEBUG=true
+            shift
+            ;;
+        -*)
+            echo "未知选项: $1"
+            show_help
+            exit 1
+            ;;
+        *)
+            if [ -z "$INPUT_FILE" ]; then
+                INPUT_FILE="$1"
+            else
+                echo "错误: 只能指定一个输入文件"
+                show_help
+                exit 1
+            fi
+            shift
+            ;;
+    esac
+done
+
+# 检查必需参数
+if [ -z "$INPUT_FILE" ]; then
+    echo "错误: 必须指定输入文件"
+    show_help
+    exit 1
+fi
+
+# 检查文件是否存在
+if [ ! -f "$INPUT_FILE" ]; then
+    echo "错误: 文件 $INPUT_FILE 不存在"
+    exit 1
+fi
+
+# 调试信息
+if [ "$DEBUG" = true ]; then
+    echo "🐛 调试模式已启用"
+    echo "输入文件: $INPUT_FILE"
+    echo "输出格式: $FORMAT"
+    echo "输出目录: $OUTPUT_DIR"
+    echo "模板: $TEMPLATE"
+    echo "主题: $THEME"
+    echo "Emoji: $EMOJI"
+    echo "目录: $TOC"
+    echo "语言: $LANG"
+fi
+
+# 获取绝对路径
+INPUT_FILE=$(realpath "$INPUT_FILE")
+BASENAME=$(basename "$INPUT_FILE" | sed 's/\.[^.]*$//')
+
+# 如果没有指定标题，使用文件名
+if [ -z "$TITLE" ]; then
+    TITLE="$BASENAME"
+fi
+
+# 确保输出目录存在
+mkdir -p "$OUTPUT_DIR"
+OUTPUT_DIR=$(realpath "$OUTPUT_DIR")
+
+# 临时文件
+TEMP_DIR=$(mktemp -d)
+HEADER_FILE="$TEMP_DIR/enhanced-header.tex"
+
+# 清理函数
+cleanup() {
+    if [ "$DEBUG" = false ]; then
+        rm -rf "$TEMP_DIR"
+    else
+        echo "🐛 临时文件保留在: $TEMP_DIR"
+    fi
+}
+trap cleanup EXIT
+
+# 生成增强头文件
+echo "🔧 准备转换环境..."
+
+if [ "$EMOJI" = true ] && [ "$FORMAT" = "pdf" ]; then
+    echo "🔍 扫描 emoji 字符..."
+    python3 "$SCRIPT_DIR/generate_emoji_header.py" "$INPUT_FILE" "$HEADER_FILE"
+    if [ $? -ne 0 ]; then
+        echo "❌ 生成 emoji 头文件失败"
+        exit 1
+    fi
+else
+    # 创建基本头文件
+    cat > "$HEADER_FILE" << EOF
+\\usepackage{fontspec}
+\\usepackage{xeCJK}
+EOF
+fi
+
+# 检查必要的工具
+if ! command -v pandoc &> /dev/null; then
+    echo "❌ 未找到 pandoc，请先安装"
+    exit 1
+fi
+
+# 获取主题色
+THEME_COLOR=$(get_theme_color "$THEME")
+
+# 构建 pandoc 命令
+PANDOC_CMD="pandoc \"$INPUT_FILE\""
+PANDOC_CMD="$PANDOC_CMD -o \"$OUTPUT_DIR/${BASENAME}.${FORMAT}\""
+PANDOC_CMD="$PANDOC_CMD -M title=\"$TITLE\""
+PANDOC_CMD="$PANDOC_CMD -M subtitle=\"$SUBTITLE\""
+PANDOC_CMD="$PANDOC_CMD -M date=\"$(date '+%Y-%m-%d')\""
+PANDOC_CMD="$PANDOC_CMD -M author=\"$AUTHOR\""
+PANDOC_CMD="$PANDOC_CMD -M lang=\"$LANG\""
+
+# 根据输出格式设置特定参数
+case $FORMAT in
+    pdf)
+        if ! command -v xelatex &> /dev/null; then
+            echo "❌ 未找到 xelatex，请先安装 LaTeX"
+            exit 1
+        fi
+        
+        PANDOC_CMD="$PANDOC_CMD -f markdown+wikilinks_title_after_pipe"
+        PANDOC_CMD="$PANDOC_CMD --template $TEMPLATE"
+        PANDOC_CMD="$PANDOC_CMD -t pdf"
+        PANDOC_CMD="$PANDOC_CMD --pdf-engine=xelatex"
+        PANDOC_CMD="$PANDOC_CMD -V mainfont=\"Songti SC\""
+        PANDOC_CMD="$PANDOC_CMD -V CJKmainfont=\"Songti SC\""
+        PANDOC_CMD="$PANDOC_CMD -V monofont=\"Noto Sans Mono CJK SC\""
+        PANDOC_CMD="$PANDOC_CMD -V sansfont=\"Noto Sans CJK SC\""
+        
+        if [ "$EMOJI" = true ]; then
+            PANDOC_CMD="$PANDOC_CMD -H \"$HEADER_FILE\""
+        fi
+        
+        PANDOC_CMD="$PANDOC_CMD -M titlepage=true"
+        PANDOC_CMD="$PANDOC_CMD -M titlepage-color=\"$THEME_COLOR\""
+        PANDOC_CMD="$PANDOC_CMD -M titlepage-text-color=\"FFFFFF\""
+        PANDOC_CMD="$PANDOC_CMD -M titlepage-rule-color=\"FFE600\""
+        PANDOC_CMD="$PANDOC_CMD -M titlepage-rule-height=2"
+        PANDOC_CMD="$PANDOC_CMD -M logo-width=\"6cm\""
+        
+        if [ "$TOC" = true ]; then
+            PANDOC_CMD="$PANDOC_CMD -M toc=true"
+        fi
+        
+        PANDOC_CMD="$PANDOC_CMD -V documentclass=report -V book -V classoption=openany"
+        ;;
+        
+    docx)
+        if [ "$TOC" = true ]; then
+            PANDOC_CMD="$PANDOC_CMD --toc"
+        fi
+        ;;
+        
+    html)
+        PANDOC_CMD="$PANDOC_CMD -s --self-contained"
+        if [ "$TOC" = true ]; then
+            PANDOC_CMD="$PANDOC_CMD --toc"
+        fi
+        ;;
+        
+    epub)
+        if [ "$TOC" = true ]; then
+            PANDOC_CMD="$PANDOC_CMD --toc"
+        fi
+        ;;
+        
+    pptx)
+        PANDOC_CMD="$PANDOC_CMD -t pptx"
+        ;;
+        
+    *)
+        echo "❌ 不支持的输出格式: $FORMAT"
+        echo "支持的格式: pdf, docx, html, epub, pptx"
+        exit 1
+        ;;
+esac
+
+# 执行转换
+echo "📝 转换为 $FORMAT 格式..."
+
+if [ "$DEBUG" = true ]; then
+    echo "🐛 执行命令: $PANDOC_CMD"
+    eval $PANDOC_CMD
+else
+    eval $PANDOC_CMD 2>/dev/null
+fi
+
+if [ $? -eq 0 ]; then
+    echo "✅ 转换成功: $OUTPUT_DIR/${BASENAME}.${FORMAT}"
+    
+    # 显示文件信息
+    FILE_SIZE=$(du -h "$OUTPUT_DIR/${BASENAME}.${FORMAT}" | cut -f1)
+    echo "📊 文件大小: $FILE_SIZE"
+else
+    echo "❌ 转换失败"
+    if [ "$DEBUG" = false ]; then
+        echo "💡 使用 --debug 选项查看详细错误信息"
+    fi
+    exit 1
+fi
