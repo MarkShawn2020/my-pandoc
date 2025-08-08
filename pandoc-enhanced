@@ -30,11 +30,11 @@ Pandoc Enhanced - 增强版 pandoc 转换器
     -o, --output <dir>  输出目录 (默认: ~/Documents)
     -t, --title <title> 文档标题 (默认: 使用文件名)
     -s, --subtitle <subtitle> 副标题 (默认: V0.1)
-    -a, --author <author> 作者 (默认: 南川)
+    -a, --author <author> 作者 (默认: 手工川)
     
 高级选项:
     --template <name>   指定模板 (eisvogel|default|custom)
-    --theme <name>      PDF 主题色 (blue|red|green|purple) (默认: purple)
+    --theme <name>      PDF 主题色 (blue|red|green|purple 或 #十六进制颜色) (默认: #B55F3F)
     --toc               生成目录 (默认启用)
     --no-toc            不生成目录
     --emoji             启用 emoji 支持 (默认启用)
@@ -78,10 +78,10 @@ show_version() {
 OUTPUT_DIR="$HOME/Documents"
 FORMAT="pdf"
 SUBTITLE="V0.1"
-AUTHOR="南川"
+AUTHOR="手工川"
 TITLE=""
 TEMPLATE="eisvogel"
-THEME="purple"
+THEME="#B55F3F"
 TOC=true
 EMOJI=true
 LANG="zh-CN"
@@ -90,15 +90,22 @@ INPUT_FILE=""
 
 # 主题色配置函数
 get_theme_color() {
-    case $1 in
-        "blue") echo "1E88E5" ;;
-        "red") echo "E53935" ;;
-        "green") echo "43A047" ;;
-        "purple") echo "5D1EB1" ;;
-        "orange") echo "FB8C00" ;;
-        "teal") echo "00ACC1" ;;
-        *) echo "5D1EB1" ;;  # 默认紫色
-    esac
+    # 检查是否是直接的十六进制颜色值
+    if [[ $1 =~ ^#?[0-9A-Fa-f]{6}$ ]]; then
+        # 移除可能的 # 前缀，返回纯十六进制值
+        echo "${1#\#}"
+    else
+        # 使用预定义的主题
+        case $1 in
+            "blue") echo "1E88E5" ;;
+            "red") echo "E53935" ;;
+            "green") echo "43A047" ;;
+            "purple") echo "5D1EB1" ;;
+            "orange") echo "FB8C00" ;;
+            "teal") echo "00ACC1" ;;
+            *) echo "B55F3F" ;;  # 默认使用用户指定的颜色
+        esac
+    fi
 }
 
 # 解析参数
