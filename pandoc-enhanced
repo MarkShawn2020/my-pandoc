@@ -40,6 +40,7 @@ Pandoc Enhanced - 增强版 pandoc 转换器
     --emoji             启用 emoji 支持 (默认启用)
     --no-emoji          禁用 emoji 支持
     --lang <lang>       文档语言 (zh-CN|en-US|ja-JP) (默认: zh-CN)
+    --qrcode-url <url>  生成 URL 的 QR 码并添加到文档
     
 其他选项:
     -h, --help          显示此帮助信息
@@ -87,6 +88,7 @@ EMOJI=true
 LANG="zh-CN"
 DEBUG=false
 INPUT_FILE=""
+QRCODE_URL=""
 
 # 主题色配置函数
 get_theme_color() {
@@ -167,6 +169,10 @@ while [[ $# -gt 0 ]]; do
             LANG="$2"
             shift 2
             ;;
+        --qrcode-url)
+            QRCODE_URL="$2"
+            shift 2
+            ;;
         --debug)
             DEBUG=true
             shift
@@ -213,6 +219,7 @@ if [ "$DEBUG" = true ]; then
     echo "Emoji: $EMOJI"
     echo "目录: $TOC"
     echo "语言: $LANG"
+    [ -n "$QRCODE_URL" ] && echo "QR码 URL: $QRCODE_URL"
 fi
 
 # 获取绝对路径
@@ -260,6 +267,26 @@ else
 EOF
 fi
 
+# 生成 QR 码（如果提供了 URL）
+QRCODE_PATH=""
+if [ -n "$QRCODE_URL" ] && [ "$FORMAT" = "pdf" ]; then
+    echo "🔗 生成 QR 码: $QRCODE_URL"
+    
+    # 调用 Python 脚本生成 QR 码
+    QRCODE_OUTPUT=$(python3 "$SCRIPT_DIR/generate_qrcode.py" "$QRCODE_URL" "$TEMP_DIR" 2>&1)
+    if [ $? -eq 0 ]; then
+        # 从输出中提取 QR 码路径
+        QRCODE_PATH=$(echo "$QRCODE_OUTPUT" | grep "QRCODE_PATH:" | cut -d':' -f2-)
+        if [ -n "$QRCODE_PATH" ]; then
+            echo "✅ QR 码已生成: $QRCODE_PATH"
+        fi
+    else
+        echo "❌ 生成 QR 码失败"
+        echo "$QRCODE_OUTPUT"
+        exit 1
+    fi
+fi
+
 # 检查必要的工具
 if ! command -v pandoc &> /dev/null; then
     echo "❌ 未找到 pandoc，请先安装"
@@ -305,6 +332,12 @@ case $FORMAT in
         PANDOC_CMD="$PANDOC_CMD -M titlepage-rule-color=\"FFE600\""
         PANDOC_CMD="$PANDOC_CMD -M titlepage-rule-height=2"
         PANDOC_CMD="$PANDOC_CMD -M logo-width=\"6cm\""
+        
+        # 如果有 QR 码，添加为 titlepage-logo
+        if [ -n "$QRCODE_PATH" ]; then
+            PANDOC_CMD="$PANDOC_CMD -M titlepage-logo=\"$QRCODE_PATH\""
+            PANDOC_CMD="$PANDOC_CMD -M qrcode-url=\"$QRCODE_URL\""
+        fi
         
         if [ "$TOC" = true ]; then
             PANDOC_CMD="$PANDOC_CMD -M toc=true"
