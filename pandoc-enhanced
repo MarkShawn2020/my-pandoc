@@ -1,227 +1,114 @@
 #!/bin/bash
 
-# Pandoc Enhanced - pandoc 命令的增强包装器
-# 基于 eisvogel 模板，支持中文、emoji、多种输出格式和自定义主题
-# 完全兼容原生 pandoc 命令参数
+# Pandoc Enhanced - A wrapper for pandoc with enhanced features
+# Adds: QR code generation, emoji support, theme system, and CJK optimizations
+# All native pandoc options are passed through transparently
 
-# 获取脚本所在目录
+# Get script directory
 if [ -L "$0" ]; then
-    # 如果是软链接，获取真实路径
     SCRIPT_DIR="$( cd "$( dirname "$(readlink "$0")" )" &> /dev/null && pwd )"
 else
     SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 fi
 
-# 显示帮助信息
-show_help() {
+# Enhanced features help
+show_enhanced_help() {
     cat << EOF
-Pandoc Enhanced - pandoc 命令的增强包装器
+Pandoc Enhanced - Additional features for pandoc
 
-用法: pandoc-enhanced <input_file> [options] [pandoc-options]
+ENHANCED FEATURES:
+  --theme COLOR           PDF theme color (blue|red|green|purple|orange|teal|#hex)
+                         Default: #B55F3F
+  --qrcode-url URL       Generate QR code from URL and add to PDF titlepage
+  --qrcode-bg COLOR      QR code background (transparent|theme|#hex)
+  --qrcode-fg COLOR      QR code foreground color (#hex)
+  --emoji/--no-emoji     Enable/disable emoji font support (default: enabled)
+  --cjk-fonts            Apply optimized CJK (Chinese/Japanese/Korean) fonts
+  --eisvogel             Use eisvogel LaTeX template (applied by default for PDF)
+  --debug                Show debug information including actual pandoc command
 
-说明: 
-  本工具是对 pandoc 的增强包装，提供了中文支持、主题系统、QR码生成等额外功能。
-  支持所有原生 pandoc 参数，未识别的参数将直接传递给 pandoc。
-  基于 eisvogel 模板构建。
+EXAMPLES:
+  # Basic PDF with enhanced defaults (eisvogel template, CJK fonts)
+  pandoc-enhanced document.md -o output.pdf
+  
+  # PDF with theme and QR code
+  pandoc-enhanced document.md -o output.pdf --theme blue --qrcode-url "https://github.com"
+  
+  # Pass through native pandoc options
+  pandoc-enhanced document.md -o output.pdf --toc --number-sections
 
-用法: pandoc-enhanced <input_file> [options] [-- pandoc-options]
+Note: All unrecognized options are passed directly to pandoc.
 
-支持格式:
-    输入: markdown, org, rst, docx, epub, html 等
-    输出: pdf, docx, html, epub, pptx 等
-
-参数:
-    <input_file>        要转换的文件路径
-    
-基本选项:
-    -f, --format <fmt>  输出格式 (pdf|docx|html|epub|pptx) (默认: pdf)
-    -o, --output <dir>  输出目录 (默认: 与输入文件相同目录)
-    -t, --title <title> 文档标题 (默认: 使用文件名)
-    -s, --subtitle <subtitle> 副标题 (默认: V0.1)
-    -a, --author <author> 作者 (默认: 手工川)
-    
-高级选项:
-    --template <name>   指定模板 (eisvogel|default|custom)
-    --theme <name>      PDF 主题色 (blue|red|green|purple 或 #十六进制颜色) (默认: #B55F3F)
-    --toc               生成目录 (默认启用)
-    --no-toc            不生成目录
-    --emoji             启用 emoji 支持 (默认启用)
-    --no-emoji          禁用 emoji 支持
-    --lang <lang>       文档语言 (zh-CN|en-US|ja-JP) (默认: zh-CN)
-    --qrcode-url <url>  生成 URL 的 QR 码并添加到文档
-    --qrcode-bg <bg>    QR 码背景色 (transparent|theme|#十六进制) (默认: transparent)
-    --qrcode-fg <fg>    QR 码前景色 (#十六进制) (自动选择)
-    
-其他选项:
-    -h, --help          显示此帮助信息
-    -v, --version       显示版本信息
-    --debug             启用调试模式
-
-示例:
-    # 基本 PDF 转换
-    pandoc-enhanced test.md
-    
-    # 转换为 Word 文档
-    pandoc-enhanced test.md -f docx
-    
-    # 自定义输出和样式
-    pandoc-enhanced test.md -o ~/Desktop -t "技术文档" --theme blue
-    
-    # 生成带 QR 码的 PDF（透明背景）
-    pandoc-enhanced test.md --qrcode-url "https://github.com"
-    
-    # QR 码使用文档主题色作为背景
-    pandoc-enhanced test.md --qrcode-url "https://github.com" --qrcode-bg theme
-    
-    # 自定义 QR 码颜色
-    pandoc-enhanced test.md --qrcode-url "https://github.com" --qrcode-bg "#FF0000" --qrcode-fg "#FFFFFF"
-    
-    # 转换为 HTML 演示文稿
-    pandoc-enhanced test.md -f html --template slides
-    
-    # 英文文档转换
-    pandoc-enhanced readme.md --lang en-US --author "John Doe"
-
-配置文件:
-    ~/.config/pandoc-enhanced/config.yaml - 全局配置
-    .pandoc-enhanced.yaml - 项目配置
 EOF
+    echo "========================="
+    echo "NATIVE PANDOC OPTIONS:"
+    echo "========================="
+    pandoc --help
 }
 
-# 显示版本信息
+# Version info
 show_version() {
-    echo "Pandoc Enhanced v1.0.0"
-    echo "Enhanced pandoc converter with Chinese and emoji support"
+    echo "Pandoc Enhanced v2.0.0"
+    echo "A wrapper for pandoc with enhanced features"
+    echo ""
+    pandoc --version
 }
 
-# 默认参数
-OUTPUT_DIR=""
-FORMAT="pdf"
-SUBTITLE="V0.1"
-AUTHOR="手工川"
-TITLE=""
-TEMPLATE="eisvogel"
-THEME="#B55F3F"
-TOC=true
-EMOJI=true
-LANG="zh-CN"
-DEBUG=false
-INPUT_FILE=""
+# Initialize enhanced parameters
+THEME=""
 QRCODE_URL=""
 QRCODE_BG="transparent"
 QRCODE_FG=""
+EMOJI=true
+CJK_FONTS=true
+EISVOGEL=true
+DEBUG=false
 
-# 存储额外的 pandoc 参数
-PANDOC_EXTRA_ARGS=()
+# Arrays for pandoc arguments
+PANDOC_ARGS=()
+ENHANCED_PANDOC_ARGS=()
 
-# 主题色配置函数
+# Temporary directory for generated files
+TEMP_DIR=""
+
+# Clean up function
+cleanup() {
+    if [ -n "$TEMP_DIR" ] && [ -d "$TEMP_DIR" ]; then
+        if [ "$DEBUG" = false ]; then
+            rm -rf "$TEMP_DIR"
+        else
+            echo "Debug: Temporary files kept in: $TEMP_DIR"
+        fi
+    fi
+}
+trap cleanup EXIT
+
+# Theme color helper
 get_theme_color() {
-    # 检查是否是直接的十六进制颜色值
-    if [[ $1 =~ ^#?[0-9A-Fa-f]{6}$ ]]; then
-        # 移除可能的 # 前缀，返回纯十六进制值
-        echo "${1#\#}"
-    else
-        # 使用预定义的主题
-        case $1 in
-            "blue") echo "1E88E5" ;;
-            "red") echo "E53935" ;;
-            "green") echo "43A047" ;;
-            "purple") echo "5D1EB1" ;;
-            "orange") echo "FB8C00" ;;
-            "teal") echo "00ACC1" ;;
-            *) echo "B55F3F" ;;  # 默认使用用户指定的颜色
-        esac
-    fi
+    case $1 in
+        blue) echo "1E88E5" ;;
+        red) echo "E53935" ;;
+        green) echo "43A047" ;;
+        purple) echo "5D1EB1" ;;
+        orange) echo "FB8C00" ;;
+        teal) echo "00ACC1" ;;
+        *) echo "${1#\#}" ;;
+    esac
 }
 
-# 获取 QR 码的实际主题色（应用 eisvogel/pagecolor 的颜色变换）
-get_qrcode_theme_color() {
-    local theme_color="$1"
-    
-    # eisvogel 的 pagecolor 会对颜色进行变换
-    # 经过分析，变换系数为: R*0.895, G*0.937, B*0.937
-    # 使用 Python 进行精确计算
-    local adjusted_color=$(python3 -c "
-import sys
-hex_color = '$theme_color'.lstrip('#')
-r = int(hex_color[0:2], 16)
-g = int(hex_color[2:4], 16)
-b = int(hex_color[4:6], 16)
-
-# 应用 eisvogel/pagecolor 的变换系数
-# 使用 round 而不是 int 以获得更准确的结果
-r_new = round(r * 0.895)
-g_new = round(g * 0.937)
-b_new = round(b * 0.937)
-
-print('{:02X}{:02X}{:02X}'.format(r_new, g_new, b_new))
-" 2>/dev/null)
-    
-    if [ -n "$adjusted_color" ]; then
-        echo "$adjusted_color"
-    else
-        # 如果 Python 计算失败，返回原色
-        echo "$theme_color"
-    fi
-}
-
-# 解析参数
+# Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         -h|--help)
-            show_help
+            show_enhanced_help
             exit 0
             ;;
         -v|--version)
             show_version
             exit 0
             ;;
-        -f|--format)
-            FORMAT="$2"
-            shift 2
-            ;;
-        -o|--output)
-            OUTPUT_DIR="$2"
-            shift 2
-            ;;
-        -t|--title)
-            TITLE="$2"
-            shift 2
-            ;;
-        -s|--subtitle)
-            SUBTITLE="$2"
-            shift 2
-            ;;
-        -a|--author)
-            AUTHOR="$2"
-            shift 2
-            ;;
-        --template)
-            TEMPLATE="$2"
-            shift 2
-            ;;
         --theme)
             THEME="$2"
-            shift 2
-            ;;
-        --toc)
-            TOC=true
-            shift
-            ;;
-        --no-toc)
-            TOC=false
-            shift
-            ;;
-        --emoji)
-            EMOJI=true
-            shift
-            ;;
-        --no-emoji)
-            EMOJI=false
-            shift
-            ;;
-        --lang)
-            LANG="$2"
             shift 2
             ;;
         --qrcode-url)
@@ -236,274 +123,206 @@ while [[ $# -gt 0 ]]; do
             QRCODE_FG="$2"
             shift 2
             ;;
+        --emoji)
+            EMOJI=true
+            shift
+            ;;
+        --no-emoji)
+            EMOJI=false
+            shift
+            ;;
+        --cjk-fonts)
+            CJK_FONTS=true
+            shift
+            ;;
+        --no-cjk-fonts)
+            CJK_FONTS=false
+            shift
+            ;;
+        --eisvogel)
+            EISVOGEL=true
+            shift
+            ;;
+        --no-eisvogel)
+            EISVOGEL=false
+            shift
+            ;;
         --debug)
             DEBUG=true
             shift
             ;;
-        -*)
-            # 收集未识别的参数，传递给 pandoc
-            PANDOC_EXTRA_ARGS+=("$1")
-            # 如果参数需要值，也收集下一个参数
-            if [[ $# -gt 1 && ! "$2" =~ ^- ]]; then
-                PANDOC_EXTRA_ARGS+=("$2")
-                shift
-            fi
-            shift
-            ;;
         *)
-            if [ -z "$INPUT_FILE" ]; then
-                INPUT_FILE="$1"
-            else
-                echo "错误: 只能指定一个输入文件"
-                show_help
-                exit 1
-            fi
+            # Pass all other arguments to pandoc
+            PANDOC_ARGS+=("$1")
             shift
             ;;
     esac
 done
 
-# 检查必需参数
-if [ -z "$INPUT_FILE" ]; then
-    echo "错误: 必须指定输入文件"
-    show_help
-    exit 1
-fi
-
-# 检查文件是否存在
-if [ ! -f "$INPUT_FILE" ]; then
-    echo "错误: 文件 $INPUT_FILE 不存在"
-    exit 1
-fi
-
-# 获取绝对路径
-INPUT_FILE=$(realpath "$INPUT_FILE")
-BASENAME=$(basename "$INPUT_FILE" | sed 's/\.[^.]*$//')
-
-# 如果没有指定标题，使用文件名
-if [ -z "$TITLE" ]; then
-    TITLE="$BASENAME"
-fi
-
-# 如果没有指定输出目录，使用输入文件所在目录
-if [ -z "$OUTPUT_DIR" ]; then
-    OUTPUT_DIR=$(dirname "$INPUT_FILE")
-fi
-
-# 确保输出目录存在
-mkdir -p "$OUTPUT_DIR"
-OUTPUT_DIR=$(realpath "$OUTPUT_DIR")
-
-# 调试信息
-if [ "$DEBUG" = true ]; then
-    echo "🐛 调试模式已启用"
-    echo "输入文件: $INPUT_FILE"
-    echo "输出格式: $FORMAT"
-    echo "输出目录: $OUTPUT_DIR"
-    echo "模板: $TEMPLATE"
-    echo "主题: $THEME"
-    echo "Emoji: $EMOJI"
-    echo "目录: $TOC"
-    echo "语言: $LANG"
-    [ -n "$QRCODE_URL" ] && echo "QR码 URL: $QRCODE_URL"
-    [ -n "$QRCODE_URL" ] && echo "QR码背景: $QRCODE_BG"
-fi
-
-# 临时文件
-TEMP_DIR=$(mktemp -d)
-HEADER_FILE="$TEMP_DIR/enhanced-header.tex"
-
-# 清理函数
-cleanup() {
-    if [ "$DEBUG" = false ]; then
-        rm -rf "$TEMP_DIR"
-    else
-        echo "🐛 临时文件保留在: $TEMP_DIR"
-    fi
-}
-trap cleanup EXIT
-
-# 获取主题色
-THEME_COLOR=$(get_theme_color "$THEME")
-
-# 生成增强头文件
-echo "🔧 准备转换环境..."
-
-if [ "$EMOJI" = true ] && [ "$FORMAT" = "pdf" ]; then
-    echo "🔍 扫描 emoji 字符..."
-    python3 "$SCRIPT_DIR/generate_emoji_header.py" "$INPUT_FILE" "$HEADER_FILE"
-    if [ $? -ne 0 ]; then
-        echo "❌ 生成 emoji 头文件失败"
-        exit 1
-    fi
-else
-    # 创建基本头文件
-    cat > "$HEADER_FILE" << EOF
-\\usepackage{fontspec}
-\\usepackage{xeCJK}
-EOF
-fi
-
-# 生成 QR 码（如果提供了 URL）
-QRCODE_PATH=""
-if [ -n "$QRCODE_URL" ] && [ "$FORMAT" = "pdf" ]; then
-    echo "🔗 生成 QR 码: $QRCODE_URL"
-    
-    # 准备背景色和前景色参数
-    BG_COLOR=""
-    FG_COLOR="000000"  # 默认黑色前景
-    
-    if [ "$QRCODE_BG" = "transparent" ]; then
-        BG_COLOR="transparent"
-        # 如果用户没有指定前景色，透明背景用黑色前景
-        [ -z "$QRCODE_FG" ] && FG_COLOR="000000" || FG_COLOR="${QRCODE_FG#\#}"
-    elif [ "$QRCODE_BG" = "theme" ]; then
-        # 使用主题色作为背景（调整为实际渲染的颜色）
-        BG_COLOR=$(get_qrcode_theme_color "$THEME_COLOR")
-        # 如果用户没有指定前景色，主题色背景用白色前景
-        [ -z "$QRCODE_FG" ] && FG_COLOR="FFFFFF" || FG_COLOR="${QRCODE_FG#\#}"
-    elif [ -n "$QRCODE_BG" ]; then
-        # 使用指定的颜色
-        BG_COLOR="${QRCODE_BG#\#}"
-        # 如果用户没有指定前景色，深色背景用白色前景
-        [ -z "$QRCODE_FG" ] && FG_COLOR="FFFFFF" || FG_COLOR="${QRCODE_FG#\#}"
-    fi
-    
-    # 如果用户指定了前景色但没有指定背景色
-    if [ -n "$QRCODE_FG" ] && [ -z "$BG_COLOR" ]; then
-        BG_COLOR="transparent"
-        FG_COLOR="${QRCODE_FG#\#}"
-    fi
-    
-    # 调用 Python 脚本生成 QR 码
-    QRCODE_OUTPUT=$(python3 "$SCRIPT_DIR/generate_qrcode.py" "$QRCODE_URL" "$TEMP_DIR" 200 "$BG_COLOR" "$FG_COLOR" 2>&1)
-    if [ $? -eq 0 ]; then
-        # 从输出中提取 QR 码路径
-        QRCODE_PATH=$(echo "$QRCODE_OUTPUT" | grep "QRCODE_PATH:" | cut -d':' -f2-)
-        if [ -n "$QRCODE_PATH" ]; then
-            echo "✅ QR 码已生成: $QRCODE_PATH"
-        fi
-    else
-        echo "❌ 生成 QR 码失败"
-        echo "$QRCODE_OUTPUT"
-        exit 1
-    fi
-fi
-
-# 检查必要的工具
+# Check if pandoc is installed
 if ! command -v pandoc &> /dev/null; then
-    echo "❌ 未找到 pandoc，请先安装"
+    echo "Error: pandoc is not installed. Please install pandoc first."
     exit 1
 fi
 
-# 构建 pandoc 命令
-PANDOC_CMD="pandoc \"$INPUT_FILE\""
+# Detect if output is PDF by checking pandoc arguments
+OUTPUT_IS_PDF=false
+OUTPUT_FILE=""
+INPUT_FILE=""
 
-# 添加额外的 pandoc 参数
-if [ ${#PANDOC_EXTRA_ARGS[@]} -gt 0 ]; then
-    for arg in "${PANDOC_EXTRA_ARGS[@]}"; do
-        PANDOC_CMD="$PANDOC_CMD \"$arg\""
-    done
-fi
-
-PANDOC_CMD="$PANDOC_CMD -o \"$OUTPUT_DIR/${BASENAME}.${FORMAT}\""
-PANDOC_CMD="$PANDOC_CMD -M title=\"$TITLE\""
-PANDOC_CMD="$PANDOC_CMD -M subtitle=\"$SUBTITLE\""
-PANDOC_CMD="$PANDOC_CMD -M date=\"$(date '+%Y-%m-%d')\""
-PANDOC_CMD="$PANDOC_CMD -M author=\"$AUTHOR\""
-PANDOC_CMD="$PANDOC_CMD -M lang=\"$LANG\""
-
-# 根据输出格式设置特定参数
-case $FORMAT in
-    pdf)
-        if ! command -v xelatex &> /dev/null; then
-            echo "❌ 未找到 xelatex，请先安装 LaTeX"
-            exit 1
-        fi
-        
-        PANDOC_CMD="$PANDOC_CMD -f markdown+wikilinks_title_after_pipe"
-        PANDOC_CMD="$PANDOC_CMD --template $TEMPLATE"
-        PANDOC_CMD="$PANDOC_CMD -t pdf"
-        PANDOC_CMD="$PANDOC_CMD --pdf-engine=xelatex"
-        PANDOC_CMD="$PANDOC_CMD -V mainfont=\"Songti SC\""
-        PANDOC_CMD="$PANDOC_CMD -V CJKmainfont=\"Songti SC\""
-        PANDOC_CMD="$PANDOC_CMD -V monofont=\"Noto Sans Mono CJK SC\""
-        PANDOC_CMD="$PANDOC_CMD -V sansfont=\"Noto Sans CJK SC\""
-        
-        if [ "$EMOJI" = true ]; then
-            PANDOC_CMD="$PANDOC_CMD -H \"$HEADER_FILE\""
-        fi
-        
-        PANDOC_CMD="$PANDOC_CMD -M titlepage=true"
-        PANDOC_CMD="$PANDOC_CMD -M titlepage-color=\"$THEME_COLOR\""
-        PANDOC_CMD="$PANDOC_CMD -M titlepage-text-color=\"FFFFFF\""
-        PANDOC_CMD="$PANDOC_CMD -M titlepage-rule-color=\"FFE600\""
-        PANDOC_CMD="$PANDOC_CMD -M titlepage-rule-height=2"
-        PANDOC_CMD="$PANDOC_CMD -M logo-width=\"6cm\""
-        
-        # 如果有 QR 码，添加为 titlepage-logo
-        if [ -n "$QRCODE_PATH" ]; then
-            PANDOC_CMD="$PANDOC_CMD -M titlepage-logo=\"$QRCODE_PATH\""
-            PANDOC_CMD="$PANDOC_CMD -M qrcode-url=\"$QRCODE_URL\""
-        fi
-        
-        if [ "$TOC" = true ]; then
-            PANDOC_CMD="$PANDOC_CMD -M toc=true"
-        fi
-        
-        PANDOC_CMD="$PANDOC_CMD -V documentclass=report -V book -V classoption=openany"
-        ;;
-        
-    docx)
-        if [ "$TOC" = true ]; then
-            PANDOC_CMD="$PANDOC_CMD --toc"
-        fi
-        ;;
-        
-    html)
-        PANDOC_CMD="$PANDOC_CMD -s --self-contained"
-        if [ "$TOC" = true ]; then
-            PANDOC_CMD="$PANDOC_CMD --toc"
-        fi
-        ;;
-        
-    epub)
-        if [ "$TOC" = true ]; then
-            PANDOC_CMD="$PANDOC_CMD --toc"
-        fi
-        ;;
-        
-    pptx)
-        PANDOC_CMD="$PANDOC_CMD -t pptx"
-        ;;
-        
-    *)
-        echo "❌ 不支持的输出格式: $FORMAT"
-        echo "支持的格式: pdf, docx, html, epub, pptx"
-        exit 1
-        ;;
-esac
-
-# 执行转换
-echo "📝 转换为 $FORMAT 格式..."
-
-if [ "$DEBUG" = true ]; then
-    echo "🐛 执行命令: $PANDOC_CMD"
-    eval $PANDOC_CMD
-else
-    eval $PANDOC_CMD 2>/dev/null
-fi
-
-if [ $? -eq 0 ]; then
-    echo "✅ 转换成功: $OUTPUT_DIR/${BASENAME}.${FORMAT}"
+for ((i=0; i<${#PANDOC_ARGS[@]}; i++)); do
+    arg="${PANDOC_ARGS[i]}"
     
-    # 显示文件信息
-    FILE_SIZE=$(du -h "$OUTPUT_DIR/${BASENAME}.${FORMAT}" | cut -f1)
-    echo "📊 文件大小: $FILE_SIZE"
-else
-    echo "❌ 转换失败"
-    if [ "$DEBUG" = false ]; then
-        echo "💡 使用 --debug 选项查看详细错误信息"
+    # Check for output file
+    if [[ "$arg" == "-o" ]] && [[ $((i+1)) -lt ${#PANDOC_ARGS[@]} ]]; then
+        OUTPUT_FILE="${PANDOC_ARGS[$((i+1))]}"
+        if [[ "$OUTPUT_FILE" =~ \.pdf$ ]]; then
+            OUTPUT_IS_PDF=true
+        fi
     fi
-    exit 1
+    
+    # Check for output format
+    if [[ "$arg" == "-t" ]] && [[ $((i+1)) -lt ${#PANDOC_ARGS[@]} ]]; then
+        if [[ "${PANDOC_ARGS[$((i+1))]}" == "pdf" ]]; then
+            OUTPUT_IS_PDF=true
+        fi
+    fi
+    
+    # Find input file
+    if [[ -f "$arg" ]] && [[ "$arg" =~ \.(md|markdown|txt|rst|org|tex)$ ]]; then
+        INPUT_FILE="$arg"
+    fi
+done
+
+# If no output specified but input is markdown, default to PDF
+if [ -z "$OUTPUT_FILE" ] && [ -n "$INPUT_FILE" ]; then
+    BASENAME=$(basename "$INPUT_FILE" | sed 's/\.[^.]*$//')
+    OUTPUT_FILE="${BASENAME}.pdf"
+    OUTPUT_IS_PDF=true
+    PANDOC_ARGS+=("-o" "$OUTPUT_FILE")
 fi
+
+# Apply enhanced features for PDF output
+if [ "$OUTPUT_IS_PDF" = true ]; then
+    
+    # Setup temporary directory
+    TEMP_DIR=$(mktemp -d)
+    
+    # Apply eisvogel template by default
+    if [ "$EISVOGEL" = true ]; then
+        ENHANCED_PANDOC_ARGS+=("--template" "eisvogel")
+        ENHANCED_PANDOC_ARGS+=("--pdf-engine=xelatex")
+        ENHANCED_PANDOC_ARGS+=("-M" "titlepage=true")
+        
+        # Default metadata if not provided
+        ENHANCED_PANDOC_ARGS+=("-M" "titlepage-rule-height=2")
+        ENHANCED_PANDOC_ARGS+=("-M" "titlepage-rule-color=FFE600")
+        ENHANCED_PANDOC_ARGS+=("-M" "titlepage-text-color=FFFFFF")
+    fi
+    
+    # Apply CJK fonts
+    if [ "$CJK_FONTS" = true ]; then
+        ENHANCED_PANDOC_ARGS+=("-V" "mainfont=Songti SC")
+        ENHANCED_PANDOC_ARGS+=("-V" "CJKmainfont=Songti SC")
+        ENHANCED_PANDOC_ARGS+=("-V" "monofont=Noto Sans Mono CJK SC")
+        ENHANCED_PANDOC_ARGS+=("-V" "sansfont=Noto Sans CJK SC")
+    fi
+    
+    # Apply theme if specified
+    if [ -n "$THEME" ]; then
+        THEME_COLOR=$(get_theme_color "$THEME")
+        ENHANCED_PANDOC_ARGS+=("-M" "titlepage-color=$THEME_COLOR")
+    fi
+    
+    # Generate QR code if URL provided
+    if [ -n "$QRCODE_URL" ]; then
+        if [ "$DEBUG" = true ]; then
+            echo "Debug: Generating QR code for: $QRCODE_URL"
+        fi
+        
+        # Prepare colors
+        BG_COLOR="$QRCODE_BG"
+        FG_COLOR="${QRCODE_FG:-000000}"
+        
+        # Handle theme background
+        if [ "$QRCODE_BG" = "theme" ] && [ -n "$THEME" ]; then
+            THEME_COLOR=$(get_theme_color "$THEME")
+            # Apply color transformation for eisvogel
+            BG_COLOR=$(python3 -c "
+hex_color = '$THEME_COLOR'.lstrip('#')
+r = int(hex_color[0:2], 16)
+g = int(hex_color[2:4], 16)
+b = int(hex_color[4:6], 16)
+r_new = round(r * 0.895)
+g_new = round(g * 0.937)
+b_new = round(b * 0.937)
+print('{:02X}{:02X}{:02X}'.format(r_new, g_new, b_new))
+" 2>/dev/null || echo "$THEME_COLOR")
+            FG_COLOR="${QRCODE_FG:-FFFFFF}"
+        fi
+        
+        # Generate QR code
+        QRCODE_OUTPUT=$(python3 "$SCRIPT_DIR/generate_qrcode.py" "$QRCODE_URL" "$TEMP_DIR" 200 "$BG_COLOR" "$FG_COLOR" 2>&1)
+        if [ $? -eq 0 ]; then
+            QRCODE_PATH=$(echo "$QRCODE_OUTPUT" | grep "QRCODE_PATH:" | cut -d':' -f2-)
+            if [ -n "$QRCODE_PATH" ]; then
+                ENHANCED_PANDOC_ARGS+=("-M" "titlepage-logo=$QRCODE_PATH")
+                ENHANCED_PANDOC_ARGS+=("-M" "logo-width=6cm")
+                if [ "$DEBUG" = true ]; then
+                    echo "Debug: QR code generated at: $QRCODE_PATH"
+                fi
+            fi
+        else
+            echo "Warning: Failed to generate QR code"
+            [ "$DEBUG" = true ] && echo "$QRCODE_OUTPUT"
+        fi
+    fi
+    
+    # Handle emoji support
+    if [ "$EMOJI" = true ] && [ -n "$INPUT_FILE" ]; then
+        HEADER_FILE="$TEMP_DIR/emoji-header.tex"
+        python3 "$SCRIPT_DIR/generate_emoji_header.py" "$INPUT_FILE" "$HEADER_FILE" 2>/dev/null
+        if [ -f "$HEADER_FILE" ]; then
+            ENHANCED_PANDOC_ARGS+=("-H" "$HEADER_FILE")
+            if [ "$DEBUG" = true ]; then
+                echo "Debug: Emoji header generated"
+            fi
+        fi
+    fi
+    
+    # Add markdown extensions for better compatibility
+    if [[ "$INPUT_FILE" =~ \.(md|markdown)$ ]]; then
+        # Check if -f is not already specified
+        HAS_FROM=false
+        for arg in "${PANDOC_ARGS[@]}"; do
+            if [[ "$arg" == "-f" ]] || [[ "$arg" == "--from" ]]; then
+                HAS_FROM=true
+                break
+            fi
+        done
+        
+        if [ "$HAS_FROM" = false ]; then
+            ENHANCED_PANDOC_ARGS+=("-f" "markdown+wikilinks_title_after_pipe")
+        fi
+    fi
+fi
+
+# Build final pandoc command
+FINAL_ARGS=("${PANDOC_ARGS[@]}" "${ENHANCED_PANDOC_ARGS[@]}")
+
+# Debug output
+if [ "$DEBUG" = true ]; then
+    echo "Debug: Enhanced features applied:"
+    echo "  - Eisvogel template: $EISVOGEL"
+    echo "  - CJK fonts: $CJK_FONTS"
+    echo "  - Emoji support: $EMOJI"
+    [ -n "$THEME" ] && echo "  - Theme: $THEME"
+    [ -n "$QRCODE_URL" ] && echo "  - QR code: $QRCODE_URL"
+    echo ""
+    echo "Debug: Running pandoc with arguments:"
+    echo "pandoc ${FINAL_ARGS[@]}"
+    echo ""
+fi
+
+# Execute pandoc
+exec pandoc "${FINAL_ARGS[@]}"
