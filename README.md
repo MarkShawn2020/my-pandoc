@@ -140,7 +140,7 @@ pandoc-enhanced <input> [options] [-- pandoc-options]
 
 Enhanced Options:
   -f, --format FORMAT      Output format (pdf|docx|html|epub|pptx)
-  -o, --output DIR         Output directory
+  -o, --output DIR         Output directory (default: same as input file)
   -t, --title TITLE        Document title
   -s, --subtitle SUBTITLE  Document subtitle
   -a, --author AUTHOR      Document author
@@ -182,6 +182,21 @@ All other options are passed directly to pandoc.
 ### Optional
 - **qrcode[pil]** - For QR code generation
 - **CJK Fonts** - Songti SC, Noto Sans CJK SC, etc.
+
+## Practical Example
+
+### Real-world Usage
+```bash
+# Convert a markdown document with QR code and theme
+./pandoc-enhanced --no-toc './examples/GPT-5 发布会（英文完整版）.md' \
+  --qrcode-url https://mp.weixin.qq.com/s/M6rDJ-onGrIJdYepgUu79A \
+  --debug \
+  --qrcode-bg theme
+
+# Output: Creates 'examples/GPT-5 发布会（英文完整版）.pdf' in the same directory
+```
+
+By default, the output file is generated in the same directory as the input file, making it easy to keep your converted documents organized alongside their source files.
 
 ## Troubleshooting
 

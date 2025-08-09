@@ -140,7 +140,7 @@ pandoc-enhanced <输入文件> [选项] [-- pandoc选项]
 
 增强选项：
   -f, --format 格式        输出格式 (pdf|docx|html|epub|pptx)
-  -o, --output 目录        输出目录
+  -o, --output 目录        输出目录（默认：与输入文件相同目录）
   -t, --title 标题         文档标题
   -s, --subtitle 副标题    文档副标题
   -a, --author 作者        文档作者
@@ -182,6 +182,21 @@ pandoc-enhanced <输入文件> [选项] [-- pandoc选项]
 ### 可选
 - **qrcode[pil]** - 用于 QR 码生成
 - **CJK 字体** - Songti SC、Noto Sans CJK SC 等
+
+## 实际示例
+
+### 真实使用场景
+```bash
+# 转换带 QR 码和主题的 markdown 文档
+./pandoc-enhanced --no-toc './examples/GPT-5 发布会（英文完整版）.md' \
+  --qrcode-url https://mp.weixin.qq.com/s/M6rDJ-onGrIJdYepgUu79A \
+  --debug \
+  --qrcode-bg theme
+
+# 输出：在相同目录生成 'examples/GPT-5 发布会（英文完整版）.pdf'
+```
+
+默认情况下，输出文件会生成在与输入文件相同的目录中，便于将转换后的文档与源文件一起组织管理。
 
 ## 故障排除
 

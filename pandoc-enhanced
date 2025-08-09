@@ -35,7 +35,7 @@ Pandoc Enhanced - pandoc 命令的增强包装器
     
 基本选项:
     -f, --format <fmt>  输出格式 (pdf|docx|html|epub|pptx) (默认: pdf)
-    -o, --output <dir>  输出目录 (默认: ~/Documents)
+    -o, --output <dir>  输出目录 (默认: 与输入文件相同目录)
     -t, --title <title> 文档标题 (默认: 使用文件名)
     -s, --subtitle <subtitle> 副标题 (默认: V0.1)
     -a, --author <author> 作者 (默认: 手工川)
@@ -95,7 +95,7 @@ show_version() {
 }
 
 # 默认参数
-OUTPUT_DIR="$HOME/Documents"
+OUTPUT_DIR=""
 FORMAT="pdf"
 SUBTITLE="V0.1"
 AUTHOR="手工川"
@@ -276,6 +276,24 @@ if [ ! -f "$INPUT_FILE" ]; then
     exit 1
 fi
 
+# 获取绝对路径
+INPUT_FILE=$(realpath "$INPUT_FILE")
+BASENAME=$(basename "$INPUT_FILE" | sed 's/\.[^.]*$//')
+
+# 如果没有指定标题，使用文件名
+if [ -z "$TITLE" ]; then
+    TITLE="$BASENAME"
+fi
+
+# 如果没有指定输出目录，使用输入文件所在目录
+if [ -z "$OUTPUT_DIR" ]; then
+    OUTPUT_DIR=$(dirname "$INPUT_FILE")
+fi
+
+# 确保输出目录存在
+mkdir -p "$OUTPUT_DIR"
+OUTPUT_DIR=$(realpath "$OUTPUT_DIR")
+
 # 调试信息
 if [ "$DEBUG" = true ]; then
     echo "🐛 调试模式已启用"
@@ -290,19 +308,6 @@ if [ "$DEBUG" = true ]; then
     [ -n "$QRCODE_URL" ] && echo "QR码 URL: $QRCODE_URL"
     [ -n "$QRCODE_URL" ] && echo "QR码背景: $QRCODE_BG"
 fi
-
-# 获取绝对路径
-INPUT_FILE=$(realpath "$INPUT_FILE")
-BASENAME=$(basename "$INPUT_FILE" | sed 's/\.[^.]*$//')
-
-# 如果没有指定标题，使用文件名
-if [ -z "$TITLE" ]; then
-    TITLE="$BASENAME"
-fi
-
-# 确保输出目录存在
-mkdir -p "$OUTPUT_DIR"
-OUTPUT_DIR=$(realpath "$OUTPUT_DIR")
 
 # 临时文件
 TEMP_DIR=$(mktemp -d)
