@@ -6,7 +6,7 @@
 
 Professional document converter with native Chinese support, enhanced themes, and advanced features.
 
-[中文](#中文) | [English](#english)
+**English** | [中文](README-zh.md)
 
 ## Features
 
@@ -175,82 +175,20 @@ curl -o ~/.pandoc/templates/eisvogel.latex \
 pandoc-enhanced document.md --debug
 ```
 
+## Contributing
+
+Issues and Pull Requests are welcome!
+
+## Author
+
+- **MarkShawn2020** - [GitHub](https://github.com/MarkShawn2020)
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
----
+## Acknowledgments
 
-## 中文
-
-专业的文档转换工具，原生支持中文、增强主题和高级功能。
-
-### 核心特性
-
-- **多格式导出**：PDF、Word、HTML、EPUB、PowerPoint，使用优化模板
-- **原生中文支持**：内置中日韩字体配置，开箱即用
-- **智能 Emoji 渲染**：自动检测并使用 Noto Emoji 渲染
-- **专业主题系统**：6 种内置 PDF 主题色
-- **QR 码集成**：从 URL 生成 QR 码，支持自定义样式
-- **灵活配置系统**：分层配置（全局 → 项目 → 命令行）
-
-### 快速开始
-
-#### 安装
-
-```bash
-# 克隆仓库
-git clone https://github.com/MarkShawn2020/my-pandoc.git
-cd my-pandoc
-
-# 安装
-./install.sh
-```
-
-#### 基本使用
-
-```bash
-# 转换为 PDF（默认）
-pandoc-enhanced 文档.md
-
-# 转换为其他格式
-pandoc-enhanced 文档.md -f docx    # Word
-pandoc-enhanced 文档.md -f html    # HTML
-pandoc-enhanced 文档.md -f epub    # 电子书
-
-# 自定义样式
-pandoc-enhanced 文档.md --theme blue --title "我的文档"
-
-# 带 QR 码
-pandoc-enhanced 文档.md --qrcode-url "https://example.com"
-```
-
-### 高级功能
-
-#### QR 码生成
-
-```bash
-# 透明背景 QR 码（默认）
-pandoc-enhanced 文档.md --qrcode-url "https://github.com"
-
-# 主题色背景 QR 码
-pandoc-enhanced 文档.md --qrcode-url "https://github.com" --qrcode-bg theme
-
-# 自定义颜色 QR 码
-pandoc-enhanced 文档.md --qrcode-url "URL" --qrcode-bg "#FF0000" --qrcode-fg "#FFFFFF"
-```
-
-#### 主题系统
-
-| 主题 | 颜色 | 适用场景 |
-|------|------|----------|
-| `blue` | #1E88E5 | 商务文档 |
-| `red` | #E53935 | 演示文稿 |
-| `green` | #43A047 | 报告文档 |
-| `purple` | #5D1EB1 | 创意内容 |
-| `orange` | #FB8C00 | 营销材料 |
-| `teal` | #00ACC1 | 技术文档 |
-
-### 许可证
-
-MIT 许可证 - 详见 [LICENSE](LICENSE) 文件。
+- [Pandoc](https://pandoc.org/) - Universal document converter
+- [Eisvogel](https://github.com/Wandmalfarbe/pandoc-latex-template) - Beautiful LaTeX template
+- [Noto Fonts](https://www.google.com/get/noto/) - Beautiful and free fonts for all languages
