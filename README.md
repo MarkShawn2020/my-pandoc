@@ -12,19 +12,10 @@
 ## 什么是 Pandoc Enhanced？
 
 **Pandoc Enhanced** 是一个透明的包装器，它：
-- **添加了** QR 码生成、Emoji 支持和 CJK 优化
 - **保持了** 与原生 pandoc 100% 的兼容性 - 所有 pandoc 选项都按预期工作
 - **应用了** 使用 Eisvogel LaTeX 模板的智能默认设置，生成精美的 PDF
 - **简化了** 中文/CJK 文档处理，预配置了字体
-
-## 核心特性
-
-### 增强功能（我们的添加）
-- 😀 **Emoji 支持**：自动配置 Emoji 字体
-- 🀄 **CJK 优化**：预配置的中文、日文和韩文字体
-- 📄 **Eisvogel 模板**：默认生成精美的 PDF 输出
-- 🐛 **调试模式**：查看实际执行的 pandoc 命令
-- 🔗 **QR 码集成**：为 PDF 添加可自定义颜色的 QR 码
+- **添加了** QR 码生成、Emoji 支持和 CJK 优化
 
 ### 原生 Pandoc 功能（直接传递）
 所有 pandoc 选项都按照[官方 pandoc 手册](https://pandoc.org/MANUAL.html)中的说明工作：
@@ -62,40 +53,7 @@ pandoc-enhanced document.md -o output.pdf --toc --number-sections
 pandoc-enhanced document.md -o output.pdf --qrcode-url "https://github.com"
 ```
 
-### 仅增强功能
 
-我们的包装器在 pandoc 之上添加了这些选项：
-
-```bash
---qrcode-url URL       # 生成 QR 码并添加到 PDF
---qrcode-bg COLOR      # QR 码背景 (transparent|#hex)
---qrcode-fg COLOR      # QR 码前景色
---emoji/--no-emoji     # 启用/禁用 emoji 支持（默认：启用）
---cjk-fonts            # 应用 CJK 字体（默认：PDF 启用）
---eisvogel             # 使用 Eisvogel 模板（默认：PDF 启用）
---debug                # 显示实际运行的 pandoc 命令
-```
-
-### 示例
-
-```bash
-# 简单的 PDF，自动应用我们的增强功能（Eisvogel + CJK 字体）
-pandoc-enhanced document.md -o output.pdf
-
-# 添加 QR 码
-pandoc-enhanced document.md -o output.pdf --qrcode-url "https://example.com"
-
-# 结合原生 pandoc 选项
-pandoc-enhanced document.md -o output.pdf \
-  --qrcode-url "https://github.com" \ # 我们的增强
-  --toc \                            # 原生 pandoc
-  --number-sections \                # 原生 pandoc
-  -M author="张三" \                  # 原生 pandoc
-  --bibliography=refs.bib           # 原生 pandoc
-
-# 调试模式查看发生了什么
-pandoc-enhanced document.md -o output.pdf --debug
-```
 
 ## 实际示例
 
@@ -107,16 +65,6 @@ pandoc-enhanced document.md -o output.pdf --debug
   --qrcode-bg transparent \
   --toc
 ```
-
-## 工作原理
-
-1. **解析参数**：将我们的增强选项与原生 pandoc 选项分离
-2. **应用增强**：如果输出 PDF，自动：
-   - 使用 Eisvogel 模板生成精美输出
-   - 为中文/日文/韩文文本配置 CJK 字体
-   - 如果需要，生成 QR 码
-3. **传递给 Pandoc**：所有参数（原生 + 我们的添加）都传递给 pandoc
-4. **完全兼容**：Pandoc 正常处理其他所有内容
 
 ## 依赖项
 
