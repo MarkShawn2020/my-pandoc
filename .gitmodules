@@ -1,0 +1,3 @@
+[submodule "eisvogel"]
+	path = eisvogel
+	url = git@github.com:enhuiz/eisvogel.git
