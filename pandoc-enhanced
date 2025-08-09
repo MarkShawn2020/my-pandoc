@@ -41,6 +41,8 @@ Pandoc Enhanced - 增强版 pandoc 转换器
     --no-emoji          禁用 emoji 支持
     --lang <lang>       文档语言 (zh-CN|en-US|ja-JP) (默认: zh-CN)
     --qrcode-url <url>  生成 URL 的 QR 码并添加到文档
+    --qrcode-bg <bg>    QR 码背景色 (transparent|theme|#十六进制) (默认: transparent)
+    --qrcode-fg <fg>    QR 码前景色 (#十六进制) (自动选择)
     
 其他选项:
     -h, --help          显示此帮助信息
@@ -56,6 +58,15 @@ Pandoc Enhanced - 增强版 pandoc 转换器
     
     # 自定义输出和样式
     pandoc-enhanced test.md -o ~/Desktop -t "技术文档" --theme blue
+    
+    # 生成带 QR 码的 PDF（透明背景）
+    pandoc-enhanced test.md --qrcode-url "https://github.com"
+    
+    # QR 码使用文档主题色作为背景
+    pandoc-enhanced test.md --qrcode-url "https://github.com" --qrcode-bg theme
+    
+    # 自定义 QR 码颜色
+    pandoc-enhanced test.md --qrcode-url "https://github.com" --qrcode-bg "#FF0000" --qrcode-fg "#FFFFFF"
     
     # 转换为 HTML 演示文稿
     pandoc-enhanced test.md -f html --template slides
@@ -89,6 +100,8 @@ LANG="zh-CN"
 DEBUG=false
 INPUT_FILE=""
 QRCODE_URL=""
+QRCODE_BG="transparent"
+QRCODE_FG=""
 
 # 主题色配置函数
 get_theme_color() {
@@ -107,6 +120,37 @@ get_theme_color() {
             "teal") echo "00ACC1" ;;
             *) echo "B55F3F" ;;  # 默认使用用户指定的颜色
         esac
+    fi
+}
+
+# 获取 QR 码的实际主题色（应用 eisvogel/pagecolor 的颜色变换）
+get_qrcode_theme_color() {
+    local theme_color="$1"
+    
+    # eisvogel 的 pagecolor 会对颜色进行变换
+    # 经过分析，变换系数为: R*0.895, G*0.937, B*0.937
+    # 使用 Python 进行精确计算
+    local adjusted_color=$(python3 -c "
+import sys
+hex_color = '$theme_color'.lstrip('#')
+r = int(hex_color[0:2], 16)
+g = int(hex_color[2:4], 16)
+b = int(hex_color[4:6], 16)
+
+# 应用 eisvogel/pagecolor 的变换系数
+# 使用 round 而不是 int 以获得更准确的结果
+r_new = round(r * 0.895)
+g_new = round(g * 0.937)
+b_new = round(b * 0.937)
+
+print('{:02X}{:02X}{:02X}'.format(r_new, g_new, b_new))
+" 2>/dev/null)
+    
+    if [ -n "$adjusted_color" ]; then
+        echo "$adjusted_color"
+    else
+        # 如果 Python 计算失败，返回原色
+        echo "$theme_color"
     fi
 }
 
@@ -173,6 +217,14 @@ while [[ $# -gt 0 ]]; do
             QRCODE_URL="$2"
             shift 2
             ;;
+        --qrcode-bg)
+            QRCODE_BG="$2"
+            shift 2
+            ;;
+        --qrcode-fg)
+            QRCODE_FG="$2"
+            shift 2
+            ;;
         --debug)
             DEBUG=true
             shift
@@ -220,6 +272,7 @@ if [ "$DEBUG" = true ]; then
     echo "目录: $TOC"
     echo "语言: $LANG"
     [ -n "$QRCODE_URL" ] && echo "QR码 URL: $QRCODE_URL"
+    [ -n "$QRCODE_URL" ] && echo "QR码背景: $QRCODE_BG"
 fi
 
 # 获取绝对路径
@@ -249,6 +302,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# 获取主题色
+THEME_COLOR=$(get_theme_color "$THEME")
+
 # 生成增强头文件
 echo "🔧 准备转换环境..."
 
@@ -272,8 +328,34 @@ QRCODE_PATH=""
 if [ -n "$QRCODE_URL" ] && [ "$FORMAT" = "pdf" ]; then
     echo "🔗 生成 QR 码: $QRCODE_URL"
     
+    # 准备背景色和前景色参数
+    BG_COLOR=""
+    FG_COLOR="000000"  # 默认黑色前景
+    
+    if [ "$QRCODE_BG" = "transparent" ]; then
+        BG_COLOR="transparent"
+        # 如果用户没有指定前景色，透明背景用黑色前景
+        [ -z "$QRCODE_FG" ] && FG_COLOR="000000" || FG_COLOR="${QRCODE_FG#\#}"
+    elif [ "$QRCODE_BG" = "theme" ]; then
+        # 使用主题色作为背景（调整为实际渲染的颜色）
+        BG_COLOR=$(get_qrcode_theme_color "$THEME_COLOR")
+        # 如果用户没有指定前景色，主题色背景用白色前景
+        [ -z "$QRCODE_FG" ] && FG_COLOR="FFFFFF" || FG_COLOR="${QRCODE_FG#\#}"
+    elif [ -n "$QRCODE_BG" ]; then
+        # 使用指定的颜色
+        BG_COLOR="${QRCODE_BG#\#}"
+        # 如果用户没有指定前景色，深色背景用白色前景
+        [ -z "$QRCODE_FG" ] && FG_COLOR="FFFFFF" || FG_COLOR="${QRCODE_FG#\#}"
+    fi
+    
+    # 如果用户指定了前景色但没有指定背景色
+    if [ -n "$QRCODE_FG" ] && [ -z "$BG_COLOR" ]; then
+        BG_COLOR="transparent"
+        FG_COLOR="${QRCODE_FG#\#}"
+    fi
+    
     # 调用 Python 脚本生成 QR 码
-    QRCODE_OUTPUT=$(python3 "$SCRIPT_DIR/generate_qrcode.py" "$QRCODE_URL" "$TEMP_DIR" 2>&1)
+    QRCODE_OUTPUT=$(python3 "$SCRIPT_DIR/generate_qrcode.py" "$QRCODE_URL" "$TEMP_DIR" 200 "$BG_COLOR" "$FG_COLOR" 2>&1)
     if [ $? -eq 0 ]; then
         # 从输出中提取 QR 码路径
         QRCODE_PATH=$(echo "$QRCODE_OUTPUT" | grep "QRCODE_PATH:" | cut -d':' -f2-)
@@ -292,9 +374,6 @@ if ! command -v pandoc &> /dev/null; then
     echo "❌ 未找到 pandoc，请先安装"
     exit 1
 fi
-
-# 获取主题色
-THEME_COLOR=$(get_theme_color "$THEME")
 
 # 构建 pandoc 命令
 PANDOC_CMD="pandoc \"$INPUT_FILE\""
