@@ -3,65 +3,87 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Pandoc 2.0+](https://img.shields.io/badge/pandoc-2.0+-green.svg)](https://pandoc.org/)
+[![Based on Eisvogel](https://img.shields.io/badge/based%20on-Eisvogel-orange.svg)](https://github.com/Wandmalfarbe/pandoc-latex-template)
 
-Professional document converter with native Chinese support, enhanced themes, and advanced features.
+An enhanced wrapper for the `pandoc` command, providing intelligent presets for Chinese document processing, professional themes, and advanced features while maintaining full compatibility with all native pandoc options.
 
 **English** | [中文](README-zh.md)
 
-## Features
+## What is Pandoc Enhanced?
 
-- **Multi-format Export**: PDF, Word, HTML, EPUB, PowerPoint with optimized templates
-- **Native CJK Support**: Built-in Chinese/Japanese/Korean fonts configuration
-- **Smart Emoji Rendering**: Automatic emoji detection and rendering with Noto Emoji
-- **Professional Themes**: 6 built-in color themes for PDF generation
+**Pandoc Enhanced** is not a replacement for pandoc, but rather an intelligent wrapper that:
+- **Extends** pandoc with pre-configured settings optimized for Chinese/CJK documents
+- **Simplifies** complex pandoc commands with sensible defaults
+- **Preserves** full compatibility with all native pandoc options
+- **Built on** the beautiful [Eisvogel LaTeX template](https://github.com/Wandmalfarbe/pandoc-latex-template)
+
+Think of it as `pandoc` with batteries included for professional document generation.
+
+## Key Features
+
+- **Full Pandoc Compatibility**: Pass any pandoc option directly - unrecognized options are forwarded to pandoc
+- **CJK-Ready**: Pre-configured Chinese, Japanese, and Korean font settings
+- **Eisvogel Template**: Beautiful PDF output using the popular Eisvogel LaTeX template
+- **Smart Defaults**: Sensible presets for common document types
+- **Theme System**: 6 professional color themes for PDF generation
 - **QR Code Integration**: Generate QR codes from URLs with customizable styling
-- **Flexible Configuration**: Cascading configuration system (global → project → CLI)
+- **Emoji Support**: Automatic emoji detection and rendering
+- **Cascading Configuration**: Global → Project → CLI parameter precedence
 
-## Quick Start
-
-### Installation
+## Installation
 
 ```bash
 # Clone repository
 git clone https://github.com/MarkShawn2020/my-pandoc.git
 cd my-pandoc
 
-# Install
+# Install (creates symlink to /usr/local/bin)
 ./install.sh
 ```
 
-### Basic Usage
+## Usage
+
+### Basic Usage (Enhanced Presets)
 
 ```bash
-# Convert to PDF (default)
+# Convert with smart defaults (PDF via Eisvogel template)
 pandoc-enhanced document.md
 
-# Convert to other formats
-pandoc-enhanced document.md -f docx    # Word
-pandoc-enhanced document.md -f html    # HTML
-pandoc-enhanced document.md -f epub    # EPUB
+# Use pre-configured formats
+pandoc-enhanced document.md -f docx    # Word with CJK support
+pandoc-enhanced document.md -f html    # HTML with proper encoding
+pandoc-enhanced document.md -f epub    # EPUB with metadata
 
-# With custom styling
+# Apply themes and styling
 pandoc-enhanced document.md --theme blue --title "My Document"
-
-# With QR code
-pandoc-enhanced document.md --qrcode-url "https://example.com"
 ```
 
-## Advanced Features
-
-### QR Code Generation
+### Advanced Usage (With Native Pandoc Options)
 
 ```bash
-# QR code with transparent background (default)
-pandoc-enhanced document.md --qrcode-url "https://github.com"
+# Mix enhanced features with native pandoc options
+pandoc-enhanced document.md \
+  --theme blue \                    # Enhanced: color theme
+  --qrcode-url "https://example.com" \  # Enhanced: QR code
+  --number-sections \                # Native pandoc option
+  --toc-depth=3 \                   # Native pandoc option
+  --metadata-file=meta.yaml         # Native pandoc option
 
-# QR code with theme color background
-pandoc-enhanced document.md --qrcode-url "https://github.com" --qrcode-bg theme
-
-# Custom QR code colors
-pandoc-enhanced document.md --qrcode-url "URL" --qrcode-bg "#FF0000" --qrcode-fg "#FFFFFF"
+# All unrecognized options are passed to pandoc
+pandoc-enhanced document.md \
+  --highlight-style=pygments \      # Passed to pandoc
+  --pdf-engine-opt="-shell-escape"  # Passed to pandoc
 ```
+
+## Enhanced Features
+
+### Pre-configured Templates
+
+The tool uses **Eisvogel** as the default LaTeX template, providing:
+- Professional typography
+- Beautiful title pages
+- Customizable color themes
+- Proper CJK support
 
 ### Theme System
 
@@ -74,10 +96,22 @@ pandoc-enhanced document.md --qrcode-url "URL" --qrcode-bg "#FF0000" --qrcode-fg
 | `orange` | #FB8C00 | Marketing materials |
 | `teal` | #00ACC1 | Technical documentation |
 
-### Configuration
+### QR Code Generation
 
-Create `~/.config/pandoc-enhanced/config.yaml` for global settings:
+```bash
+# Generate QR code with transparent background
+pandoc-enhanced document.md --qrcode-url "https://github.com"
 
+# QR code with theme-matched background
+pandoc-enhanced document.md --qrcode-url "https://github.com" --qrcode-bg theme
+
+# Custom colored QR code
+pandoc-enhanced document.md --qrcode-url "URL" --qrcode-bg "#FF0000" --qrcode-fg "#FFFFFF"
+```
+
+### Configuration System
+
+Global configuration (`~/.config/pandoc-enhanced/config.yaml`):
 ```yaml
 document:
   author: Your Name
@@ -89,8 +123,7 @@ pdf:
   toc: true
 ```
 
-Project-specific configuration in `.pandoc-enhanced.yaml`:
-
+Project configuration (`.pandoc-enhanced.yaml`):
 ```yaml
 document:
   title: Project Documentation
@@ -103,9 +136,9 @@ pdf:
 ## Command Reference
 
 ```bash
-pandoc-enhanced <input> [options]
+pandoc-enhanced <input> [options] [-- pandoc-options]
 
-Options:
+Enhanced Options:
   -f, --format FORMAT      Output format (pdf|docx|html|epub|pptx)
   -o, --output DIR         Output directory
   -t, --title TITLE        Document title
@@ -113,7 +146,7 @@ Options:
   -a, --author AUTHOR      Document author
   
   --template NAME          Template (eisvogel|default)
-  --theme COLOR            Theme color
+  --theme COLOR            Theme color for PDF
   --toc/--no-toc          Enable/disable table of contents
   --emoji/--no-emoji      Enable/disable emoji support
   --lang LANG             Document language (zh-CN|en-US|ja-JP)
@@ -124,47 +157,37 @@ Options:
   
   --debug                 Enable debug mode
   -h, --help             Show help
+
+All other options are passed directly to pandoc.
 ```
+
+## Comparison with Native Pandoc
+
+| Task | Native Pandoc | Pandoc Enhanced |
+|------|---------------|-----------------|
+| Basic conversion | `pandoc input.md -o output.pdf` | `pandoc-enhanced input.md` |
+| Chinese PDF | `pandoc input.md -o output.pdf --pdf-engine=xelatex -V CJKmainfont="Songti SC" -V mainfont="Songti SC"` | `pandoc-enhanced input.md` |
+| Eisvogel template | `pandoc input.md -o output.pdf --template eisvogel --pdf-engine=xelatex` | `pandoc-enhanced input.md` |
+| With theme | `pandoc input.md -o output.pdf --template eisvogel -V titlepage=true -V titlepage-color="1E88E5"` | `pandoc-enhanced input.md --theme blue` |
+| Full example | 100+ characters of options | `pandoc-enhanced input.md --theme blue` |
 
 ## Dependencies
 
 ### Required
-- Python 3.8+
-- Pandoc 2.0+
-- XeLaTeX (for PDF generation)
-- qrcode[pil] (for QR code generation)
+- **Pandoc** 2.0+ - The universal document converter
+- **Python** 3.8+ - For helper scripts
+- **XeLaTeX** - For PDF generation with CJK support
+- **Eisvogel Template** - Automatically installed
 
-### Fonts
-- Songti SC (Chinese)
-- Noto Sans CJK SC
-- Noto Emoji
-- Noto Sans Mono CJK SC
-
-Install on macOS:
-```bash
-brew install --cask mactex
-brew install font-songti-sc font-noto-sans-cjk-sc font-noto-emoji
-```
-
-Install on Ubuntu/Debian:
-```bash
-sudo apt-get install texlive-full fonts-noto-cjk fonts-noto-color-emoji
-```
+### Optional
+- **qrcode[pil]** - For QR code generation
+- **CJK Fonts** - Songti SC, Noto Sans CJK SC, etc.
 
 ## Troubleshooting
 
-### Missing Fonts
-```bash
-# macOS
-brew install font-songti-sc font-noto-sans-cjk-sc
-
-# Linux
-sudo apt-get install fonts-noto-cjk
-```
-
 ### Template Not Found
 ```bash
-# Download eisvogel template
+# The installer should handle this, but if needed:
 mkdir -p ~/.pandoc/templates
 curl -o ~/.pandoc/templates/eisvogel.latex \
   https://raw.githubusercontent.com/Wandmalfarbe/pandoc-latex-template/master/eisvogel.tex
@@ -172,6 +195,7 @@ curl -o ~/.pandoc/templates/eisvogel.latex \
 
 ### Debug Mode
 ```bash
+# See the actual pandoc command being executed
 pandoc-enhanced document.md --debug
 ```
 
@@ -179,16 +203,12 @@ pandoc-enhanced document.md --debug
 
 Issues and Pull Requests are welcome!
 
-## Author
-
-- **MarkShawn2020** - [GitHub](https://github.com/MarkShawn2020)
-
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
-- [Pandoc](https://pandoc.org/) - Universal document converter
-- [Eisvogel](https://github.com/Wandmalfarbe/pandoc-latex-template) - Beautiful LaTeX template
-- [Noto Fonts](https://www.google.com/get/noto/) - Beautiful and free fonts for all languages
+- [Pandoc](https://pandoc.org/) - The amazing universal document converter
+- [Eisvogel](https://github.com/Wandmalfarbe/pandoc-latex-template) - The beautiful LaTeX template we build upon
+- [Noto Fonts](https://www.google.com/get/noto/) - Comprehensive font support

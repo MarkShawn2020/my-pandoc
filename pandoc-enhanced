@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Pandoc Enhanced - 增强版 pandoc 转换器
-# 支持中文、emoji、多种输出格式和自定义模板
+# Pandoc Enhanced - pandoc 命令的增强包装器
+# 基于 eisvogel 模板，支持中文、emoji、多种输出格式和自定义主题
+# 完全兼容原生 pandoc 命令参数
 
 # 获取脚本所在目录
 if [ -L "$0" ]; then
@@ -14,9 +15,16 @@ fi
 # 显示帮助信息
 show_help() {
     cat << EOF
-Pandoc Enhanced - 增强版 pandoc 转换器
+Pandoc Enhanced - pandoc 命令的增强包装器
 
-用法: pandoc-enhanced <input_file> [options]
+用法: pandoc-enhanced <input_file> [options] [pandoc-options]
+
+说明: 
+  本工具是对 pandoc 的增强包装，提供了中文支持、主题系统、QR码生成等额外功能。
+  支持所有原生 pandoc 参数，未识别的参数将直接传递给 pandoc。
+  基于 eisvogel 模板构建。
+
+用法: pandoc-enhanced <input_file> [options] [-- pandoc-options]
 
 支持格式:
     输入: markdown, org, rst, docx, epub, html 等
@@ -102,6 +110,9 @@ INPUT_FILE=""
 QRCODE_URL=""
 QRCODE_BG="transparent"
 QRCODE_FG=""
+
+# 存储额外的 pandoc 参数
+PANDOC_EXTRA_ARGS=()
 
 # 主题色配置函数
 get_theme_color() {
@@ -230,9 +241,14 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         -*)
-            echo "未知选项: $1"
-            show_help
-            exit 1
+            # 收集未识别的参数，传递给 pandoc
+            PANDOC_EXTRA_ARGS+=("$1")
+            # 如果参数需要值，也收集下一个参数
+            if [[ $# -gt 1 && ! "$2" =~ ^- ]]; then
+                PANDOC_EXTRA_ARGS+=("$2")
+                shift
+            fi
+            shift
             ;;
         *)
             if [ -z "$INPUT_FILE" ]; then
@@ -377,6 +393,14 @@ fi
 
 # 构建 pandoc 命令
 PANDOC_CMD="pandoc \"$INPUT_FILE\""
+
+# 添加额外的 pandoc 参数
+if [ ${#PANDOC_EXTRA_ARGS[@]} -gt 0 ]; then
+    for arg in "${PANDOC_EXTRA_ARGS[@]}"; do
+        PANDOC_CMD="$PANDOC_CMD \"$arg\""
+    done
+fi
+
 PANDOC_CMD="$PANDOC_CMD -o \"$OUTPUT_DIR/${BASENAME}.${FORMAT}\""
 PANDOC_CMD="$PANDOC_CMD -M title=\"$TITLE\""
 PANDOC_CMD="$PANDOC_CMD -M subtitle=\"$SUBTITLE\""

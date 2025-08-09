@@ -3,70 +3,87 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Pandoc 2.0+](https://img.shields.io/badge/pandoc-2.0+-green.svg)](https://pandoc.org/)
+[![Based on Eisvogel](https://img.shields.io/badge/based%20on-Eisvogel-orange.svg)](https://github.com/Wandmalfarbe/pandoc-latex-template)
 
-专业的文档转换工具，原生支持中文、增强主题和高级功能。
+`pandoc` 命令的增强包装器，提供中文文档处理的智能预设、专业主题和高级功能，同时保持与所有原生 pandoc 选项的完全兼容性。
 
 [English](README.md) | **中文**
 
+## 什么是 Pandoc Enhanced？
+
+**Pandoc Enhanced** 不是 pandoc 的替代品，而是一个智能包装器：
+- **扩展** pandoc，提供针对中文/CJK 文档优化的预配置设置
+- **简化** 复杂的 pandoc 命令，提供合理的默认值
+- **保持** 与所有原生 pandoc 选项的完全兼容性  
+- **基于** 优美的 [Eisvogel LaTeX 模板](https://github.com/Wandmalfarbe/pandoc-latex-template)构建
+
+可以把它看作是自带电池的 `pandoc`，用于专业文档生成。
+
 ## 核心特性
 
-- **多格式导出**：PDF、Word、HTML、EPUB、PowerPoint，使用优化模板
-- **原生中文支持**：内置中日韩字体配置，开箱即用
-- **智能 Emoji 渲染**：自动检测并使用 Noto Emoji 渲染
-- **专业主题系统**：6 种内置 PDF 主题色
-- **QR 码集成**：从 URL 生成 QR 码，支持自定义样式
-- **灵活配置系统**：分层配置（全局 → 项目 → 命令行）
+- **完全兼容 Pandoc**：可直接传递任何 pandoc 选项 - 未识别的选项会转发给 pandoc
+- **CJK 开箱即用**：预配置的中文、日文和韩文字体设置
+- **Eisvogel 模板**：使用流行的 Eisvogel LaTeX 模板生成精美的 PDF
+- **智能默认值**：为常见文档类型提供合理的预设
+- **主题系统**：6 种专业的 PDF 生成颜色主题
+- **QR 码集成**：从 URL 生成可自定义样式的 QR 码
+- **Emoji 支持**：自动检测和渲染 emoji
+- **分层配置**：全局 → 项目 → 命令行参数的优先级
 
-## 快速开始
-
-### 安装
+## 安装
 
 ```bash
 # 克隆仓库
 git clone https://github.com/MarkShawn2020/my-pandoc.git
 cd my-pandoc
 
-# 安装
+# 安装（创建到 /usr/local/bin 的符号链接）
 ./install.sh
 ```
 
-### 基本使用
+## 使用方法
+
+### 基本用法（增强预设）
 
 ```bash
-# 转换为 PDF（默认）
-pandoc-enhanced 文档.md
+# 使用智能默认值转换（通过 Eisvogel 模板生成 PDF）
+pandoc-enhanced document.md
 
-# 转换为其他格式
-pandoc-enhanced 文档.md -f docx    # Word
-pandoc-enhanced 文档.md -f html    # HTML
-pandoc-enhanced 文档.md -f epub    # 电子书
+# 使用预配置格式
+pandoc-enhanced document.md -f docx    # 支持 CJK 的 Word
+pandoc-enhanced document.md -f html    # 正确编码的 HTML
+pandoc-enhanced document.md -f epub    # 带元数据的 EPUB
 
-# 自定义样式
-pandoc-enhanced 文档.md --theme blue --title "我的文档"
-
-# 带 QR 码
-pandoc-enhanced 文档.md --qrcode-url "https://example.com"
+# 应用主题和样式
+pandoc-enhanced document.md --theme blue --title "我的文档"
 ```
 
-## 高级功能
-
-### QR 码生成
+### 高级用法（使用原生 Pandoc 选项）
 
 ```bash
-# 透明背景 QR 码（默认）
-pandoc-enhanced 文档.md --qrcode-url "https://github.com"
+# 混合使用增强功能和原生 pandoc 选项
+pandoc-enhanced document.md \
+  --theme blue \                    # 增强：颜色主题
+  --qrcode-url "https://example.com" \  # 增强：QR 码
+  --number-sections \                # 原生 pandoc 选项
+  --toc-depth=3 \                   # 原生 pandoc 选项
+  --metadata-file=meta.yaml         # 原生 pandoc 选项
 
-# 主题色背景 QR 码
-pandoc-enhanced 文档.md --qrcode-url "https://github.com" --qrcode-bg theme
-
-# 自定义颜色 QR 码
-pandoc-enhanced 文档.md --qrcode-url "URL" --qrcode-bg "#FF0000" --qrcode-fg "#FFFFFF"
+# 所有未识别的选项都会传递给 pandoc
+pandoc-enhanced document.md \
+  --highlight-style=pygments \      # 传递给 pandoc
+  --pdf-engine-opt="-shell-escape"  # 传递给 pandoc
 ```
 
-QR 码背景色选项：
-- `transparent` - 透明背景（默认）
-- `theme` - 使用文档主题色
-- `#十六进制` - 自定义颜色
+## 增强功能
+
+### 预配置模板
+
+该工具使用 **Eisvogel** 作为默认的 LaTeX 模板，提供：
+- 专业的排版
+- 精美的标题页
+- 可自定义的颜色主题
+- 完善的 CJK 支持
 
 ### 主题系统
 
@@ -74,15 +91,27 @@ QR 码背景色选项：
 |------|------|----------|
 | `blue` | #1E88E5 | 商务文档 |
 | `red` | #E53935 | 演示文稿 |
-| `green` | #43A047 | 报告文档 |
+| `green` | #43A047 | 报告 |
 | `purple` | #5D1EB1 | 创意内容 |
 | `orange` | #FB8C00 | 营销材料 |
 | `teal` | #00ACC1 | 技术文档 |
 
-### 配置管理
+### QR 码生成
 
-创建全局配置文件 `~/.config/pandoc-enhanced/config.yaml`：
+```bash
+# 生成透明背景的 QR 码
+pandoc-enhanced document.md --qrcode-url "https://github.com"
 
+# 生成与主题匹配背景的 QR 码
+pandoc-enhanced document.md --qrcode-url "https://github.com" --qrcode-bg theme
+
+# 自定义颜色的 QR 码
+pandoc-enhanced document.md --qrcode-url "URL" --qrcode-bg "#FF0000" --qrcode-fg "#FFFFFF"
+```
+
+### 配置系统
+
+全局配置（`~/.config/pandoc-enhanced/config.yaml`）：
 ```yaml
 document:
   author: 你的名字
@@ -94,8 +123,7 @@ pdf:
   toc: true
 ```
 
-项目配置文件 `.pandoc-enhanced.yaml`：
-
+项目配置（`.pandoc-enhanced.yaml`）：
 ```yaml
 document:
   title: 项目文档
@@ -108,9 +136,9 @@ pdf:
 ## 命令参考
 
 ```bash
-pandoc-enhanced <输入文件> [选项]
+pandoc-enhanced <输入文件> [选项] [-- pandoc选项]
 
-选项:
+增强选项：
   -f, --format 格式        输出格式 (pdf|docx|html|epub|pptx)
   -o, --output 目录        输出目录
   -t, --title 标题         文档标题
@@ -118,78 +146,62 @@ pandoc-enhanced <输入文件> [选项]
   -a, --author 作者        文档作者
   
   --template 模板          模板名称 (eisvogel|default)
-  --theme 颜色             主题颜色
+  --theme 颜色             PDF 主题颜色
   --toc/--no-toc          启用/禁用目录
   --emoji/--no-emoji      启用/禁用 emoji 支持
   --lang 语言             文档语言 (zh-CN|en-US|ja-JP)
   
-  --qrcode-url URL        生成 QR 码
-  --qrcode-bg 颜色        QR 码背景色 (transparent|theme|#十六进制)
+  --qrcode-url URL        从 URL 生成 QR 码
+  --qrcode-bg 颜色        QR 码背景 (transparent|theme|#十六进制)
   --qrcode-fg 颜色        QR 码前景色
   
-  --debug                 调试模式
+  --debug                 启用调试模式
   -h, --help             显示帮助
+
+所有其他选项都会直接传递给 pandoc。
 ```
+
+## 与原生 Pandoc 的对比
+
+| 任务 | 原生 Pandoc | Pandoc Enhanced |
+|------|-------------|-----------------|
+| 基本转换 | `pandoc input.md -o output.pdf` | `pandoc-enhanced input.md` |
+| 中文 PDF | `pandoc input.md -o output.pdf --pdf-engine=xelatex -V CJKmainfont="Songti SC" -V mainfont="Songti SC"` | `pandoc-enhanced input.md` |
+| Eisvogel 模板 | `pandoc input.md -o output.pdf --template eisvogel --pdf-engine=xelatex` | `pandoc-enhanced input.md` |
+| 带主题 | `pandoc input.md -o output.pdf --template eisvogel -V titlepage=true -V titlepage-color="1E88E5"` | `pandoc-enhanced input.md --theme blue` |
+| 完整示例 | 100+ 字符的选项 | `pandoc-enhanced input.md --theme blue` |
 
 ## 依赖项
 
-### 必需依赖
-- Python 3.8+
-- Pandoc 2.0+
-- XeLaTeX（PDF 生成）
-- qrcode[pil]（QR 码生成）
+### 必需
+- **Pandoc** 2.0+ - 通用文档转换器
+- **Python** 3.8+ - 用于辅助脚本
+- **XeLaTeX** - 用于支持 CJK 的 PDF 生成
+- **Eisvogel 模板** - 自动安装
 
-### 字体依赖
-- Songti SC（宋体）
-- Noto Sans CJK SC
-- Noto Emoji
-- Noto Sans Mono CJK SC
-
-macOS 安装：
-```bash
-brew install --cask mactex
-brew install font-songti-sc font-noto-sans-cjk-sc font-noto-emoji
-pip install qrcode[pil]
-```
-
-Ubuntu/Debian 安装：
-```bash
-sudo apt-get install texlive-full fonts-noto-cjk fonts-noto-color-emoji
-pip install qrcode[pil]
-```
+### 可选
+- **qrcode[pil]** - 用于 QR 码生成
+- **CJK 字体** - Songti SC、Noto Sans CJK SC 等
 
 ## 故障排除
 
-### 字体缺失
-```bash
-# macOS
-brew install font-songti-sc font-noto-sans-cjk-sc
-
-# Linux
-sudo apt-get install fonts-noto-cjk
-```
-
 ### 模板未找到
 ```bash
-# 下载 eisvogel 模板
+# 安装程序应该会处理这个问题，但如果需要：
 mkdir -p ~/.pandoc/templates
 curl -o ~/.pandoc/templates/eisvogel.latex \
   https://raw.githubusercontent.com/Wandmalfarbe/pandoc-latex-template/master/eisvogel.tex
 ```
 
-### QR 码库缺失
-```bash
-pip install qrcode[pil]
-```
-
 ### 调试模式
 ```bash
-pandoc-enhanced 文档.md --debug
+# 查看正在执行的实际 pandoc 命令
+pandoc-enhanced document.md --debug
 ```
 
 ## 示例
 
-### 生成技术报告
+### 生成带 QR 码的技术报告
 ```bash
 pandoc-enhanced report.md \
   --title "技术报告" \
@@ -199,37 +211,26 @@ pandoc-enhanced report.md \
   --qrcode-url "https://company.com/report"
 ```
 
-### 生成带目录的学术论文
+### 混合使用原生 pandoc 选项
 ```bash
 pandoc-enhanced paper.md \
-  --title "研究论文" \
-  --author "李四" \
-  --template eisvogel \
-  --toc \
-  --theme green
+  --theme green \                  # 增强功能
+  --qrcode-url "https://doi.org" \ # 增强功能
+  --number-sections \              # pandoc 选项
+  --bibliography=refs.bib \        # pandoc 选项
+  --csl=ieee.csl                   # pandoc 选项
 ```
-
-### 批量转换
-```bash
-for file in *.md; do
-  pandoc-enhanced "$file" -o ./output --theme blue
-done
-```
-
-## 许可证
-
-MIT 许可证 - 详见 [LICENSE](LICENSE) 文件。
 
 ## 贡献
 
 欢迎提交 Issue 和 Pull Request！
 
-## 作者
+## 许可证
 
-- **MarkShawn2020** - [GitHub](https://github.com/MarkShawn2020)
+MIT 许可证 - 详见 [LICENSE](LICENSE) 文件。
 
 ## 致谢
 
-- [Pandoc](https://pandoc.org/) - 强大的文档转换工具
-- [Eisvogel](https://github.com/Wandmalfarbe/pandoc-latex-template) - 优秀的 LaTeX 模板
-- [Noto Fonts](https://www.google.com/get/noto/) - 开源字体家族
+- [Pandoc](https://pandoc.org/) - 优秀的通用文档转换器
+- [Eisvogel](https://github.com/Wandmalfarbe/pandoc-latex-template) - 我们所基于的精美 LaTeX 模板
+- [Noto Fonts](https://www.google.com/get/noto/) - 全面的字体支持
