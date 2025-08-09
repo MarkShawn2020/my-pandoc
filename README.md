@@ -7,17 +7,16 @@
 
 一个轻量级的 `pandoc` 包装器，在保持与原生 pandoc 100% 兼容的同时添加增强功能。
 
-[English](README.md) | **中文**
+## Features
 
-## 什么是 Pandoc Enhanced？
+### Custom Features
 
-**Pandoc Enhanced** 是一个透明的包装器，它：
-- **保持了** 与原生 pandoc 100% 的兼容性 - 所有 pandoc 选项都按预期工作
 - **应用了** 使用 Eisvogel LaTeX 模板的智能默认设置，生成精美的 PDF
 - **简化了** 中文/CJK 文档处理，预配置了字体
 - **添加了** QR 码生成、Emoji 支持和 CJK 优化
 
-### 原生 Pandoc 功能（直接传递）
+### Native Pandoc Features
+
 所有 pandoc 选项都按照[官方 pandoc 手册](https://pandoc.org/MANUAL.html)中的说明工作：
 - `-o`, `--output`：指定输出文件
 - `-t`, `--to`：指定输出格式
