@@ -1,13 +1,35 @@
 {
   "name": "pandoc-enhanced",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "2.0.0",
+  "description": "Professional document converter with native Chinese support, enhanced themes, and advanced features",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./pandoc-enhanced test_qrcode.md --debug",
+    "install": "./install.sh",
+    "uninstall": "sudo rm /usr/local/bin/pandoc-enhanced"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.12.1"
+  "keywords": [
+    "pandoc",
+    "markdown",
+    "pdf",
+    "document-converter",
+    "chinese",
+    "cjk",
+    "emoji",
+    "qrcode",
+    "latex",
+    "eisvogel"
+  ],
+  "author": "MarkShawn2020",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MarkShawn2020/my-pandoc.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MarkShawn2020/my-pandoc/issues"
+  },
+  "homepage": "https://github.com/MarkShawn2020/my-pandoc#readme",
+  "engines": {
+    "python": ">=3.8"
+  }
 }

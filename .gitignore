@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+
+# PDF outputs (for testing)
+test*.pdf
+temp*.pdf
+*.pdf
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.sublime-*
+
+# Config (local overrides)
+.pandoc-enhanced.local.yaml
+
+# Test files
+test_*.md
+test_*.tex
+test_*.py
+test_*.sh
+
+# Output directories
+output/
+temp/
+tmp/
