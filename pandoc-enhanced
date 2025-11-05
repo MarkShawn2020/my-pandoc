@@ -151,6 +151,16 @@ while [[ $# -gt 0 ]]; do
             DEBUG=true
             shift
             ;;
+        --no-toc)
+            # Convert --no-toc to --toc=false for pandoc compatibility
+            PANDOC_ARGS+=("--toc=false")
+            shift
+            ;;
+        --toc)
+            # Convert --toc to --toc=true for consistency
+            PANDOC_ARGS+=("--toc=true")
+            shift
+            ;;
         *)
             # Pass all other arguments to pandoc
             PANDOC_ARGS+=("$1")
