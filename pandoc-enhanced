@@ -226,15 +226,17 @@ if [ "$OUTPUT_IS_PDF" = true ]; then
 
     # Extract metadata from input file if it exists
     if [ -n "$INPUT_FILE" ] && [ -f "$INPUT_FILE" ]; then
-        # Extract 'source' field and display it as 'author' (which will be shown as date position)
+        # Extract 'source' field and use it as author if no author field exists
         SOURCE_FIELD=$(sed -n '/^---$/,/^---$/p' "$INPUT_FILE" | grep -E '^source:' | sed 's/^source:[[:space:]]*//;s/"//g;s/'\''//g' | head -1)
-        # Extract date field to display in author position
-        DATE_FIELD=$(sed -n '/^---$/,/^---$/p' "$INPUT_FILE" | grep -E '^date:' | sed 's/^date:[[:space:]]*//;s/"//g;s/'\''//g' | head -1)
+        AUTHOR_FIELD=$(sed -n '/^---$/,/^---$/p' "$INPUT_FILE" | grep -E '^author:' | sed 's/^author:[[:space:]]*//;s/"//g;s/'\''//g' | head -1)
 
-        # Swap: put date in author position, suppress original date
-        if [ -n "$DATE_FIELD" ]; then
-            ENHANCED_PANDOC_ARGS+=("-M" "author=$DATE_FIELD")
-            ENHANCED_PANDOC_ARGS+=("-M" "date=")
+        # Set author: use author field if exists, otherwise use source field, otherwise use default
+        if [ -n "$AUTHOR_FIELD" ]; then
+            ENHANCED_PANDOC_ARGS+=("-M" "author=$AUTHOR_FIELD")
+        elif [ -n "$SOURCE_FIELD" ]; then
+            ENHANCED_PANDOC_ARGS+=("-M" "author=$SOURCE_FIELD")
+        else
+            ENHANCED_PANDOC_ARGS+=("-M" "author=公众号：五道口手工川")
         fi
     fi
 

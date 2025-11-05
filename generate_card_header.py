@@ -20,12 +20,13 @@ def generate_card_header(card_image_path, output_file):
 \usepackage{calc}
 
 % Add business card to titlepage footer
-% eisvogel uses 2.5cm margins, so we match that
+% Match title text block width: \textwidth (not the 1.3\textwidth rule)
+% Position from left=6cm to align with title content
 \AddToShipoutPictureBG*{%
   \AtPageLowerLeft{%
     \raisebox{3cm}{%
-      \hspace{2.5cm}%
-      \includegraphics[width=\paperwidth-5cm]{""" + card_image_path.replace('\\', '/') + r"""}%
+      \hspace{6cm}%
+      \includegraphics[width=\textwidth]{""" + card_image_path.replace('\\', '/') + r"""}%
     }%
   }%
 }
