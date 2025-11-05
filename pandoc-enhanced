@@ -223,7 +223,8 @@ if [ "$OUTPUT_IS_PDF" = true ]; then
         ENHANCED_PANDOC_ARGS+=("--template" "eisvogel")
         ENHANCED_PANDOC_ARGS+=("--pdf-engine=xelatex")
         ENHANCED_PANDOC_ARGS+=("-M" "titlepage=true")
-        
+        ENHANCED_PANDOC_ARGS+=("-M" "graphics=true")
+
         # Default metadata if not provided
         ENHANCED_PANDOC_ARGS+=("-M" "titlepage-rule-height=2")
         ENHANCED_PANDOC_ARGS+=("-M" "titlepage-rule-color=FFE600")
@@ -234,8 +235,8 @@ if [ "$OUTPUT_IS_PDF" = true ]; then
     if [ "$CJK_FONTS" = true ]; then
         ENHANCED_PANDOC_ARGS+=("-V" "mainfont=Songti SC")
         ENHANCED_PANDOC_ARGS+=("-V" "CJKmainfont=Songti SC")
-        ENHANCED_PANDOC_ARGS+=("-V" "monofont=Noto Sans Mono CJK SC")
-        ENHANCED_PANDOC_ARGS+=("-V" "sansfont=Noto Sans CJK SC")
+        ENHANCED_PANDOC_ARGS+=("-V" "monofont=Menlo")
+        ENHANCED_PANDOC_ARGS+=("-V" "sansfont=PingFang SC")
     fi
     
     # Apply theme if specified

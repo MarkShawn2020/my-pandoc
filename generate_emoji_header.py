@@ -32,7 +32,7 @@ def generate_emoji_header(markdown_file, output_file):
     # 生成LaTeX头文件
     latex_header = r'''\usepackage{fontspec}
 \usepackage{newunicodechar}
-\newfontfamily\emojifont{Noto Emoji}
+\newfontfamily\emojifont{Apple Color Emoji}
 
 % 自动生成的 emoji 字符映射
 '''
