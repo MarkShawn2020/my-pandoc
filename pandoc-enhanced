@@ -214,10 +214,19 @@ fi
 
 # Apply enhanced features for PDF output
 if [ "$OUTPUT_IS_PDF" = true ]; then
-    
+
     # Setup temporary directory
     TEMP_DIR=$(mktemp -d)
-    
+
+    # Extract metadata from input file if it exists
+    if [ -n "$INPUT_FILE" ] && [ -f "$INPUT_FILE" ]; then
+        # Extract 'source' field and use it as 'author' if author is not set
+        SOURCE_FIELD=$(sed -n '/^---$/,/^---$/p' "$INPUT_FILE" | grep -E '^source:' | sed 's/^source:[[:space:]]*//;s/"//g;s/'\''//g' | head -1)
+        if [ -n "$SOURCE_FIELD" ]; then
+            ENHANCED_PANDOC_ARGS+=("-M" "author=$SOURCE_FIELD")
+        fi
+    fi
+
     # Apply eisvogel template by default
     if [ "$EISVOGEL" = true ]; then
         ENHANCED_PANDOC_ARGS+=("--template" "eisvogel")
@@ -227,8 +236,9 @@ if [ "$OUTPUT_IS_PDF" = true ]; then
 
         # Default metadata if not provided
         ENHANCED_PANDOC_ARGS+=("-M" "titlepage-rule-height=2")
-        ENHANCED_PANDOC_ARGS+=("-M" "titlepage-rule-color=FFE600")
+        ENHANCED_PANDOC_ARGS+=("-M" "titlepage-rule-color=FFFFFF")
         ENHANCED_PANDOC_ARGS+=("-M" "titlepage-text-color=FFFFFF")
+        ENHANCED_PANDOC_ARGS+=("-M" "titlepage-color=CC785C")
     fi
     
     # Apply CJK fonts
