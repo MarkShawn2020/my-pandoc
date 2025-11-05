@@ -22,6 +22,7 @@ ENHANCED FEATURES:
   --qrcode-url URL       Generate QR code from URL and add to PDF titlepage
   --qrcode-bg COLOR      QR code background (transparent|theme|#hex)
   --qrcode-fg COLOR      QR code foreground color (#hex)
+  --card-image PATH      Add business card image to titlepage footer
   --emoji/--no-emoji     Enable/disable emoji font support (default: enabled)
   --cjk-fonts            Apply optimized CJK (Chinese/Japanese/Korean) fonts
   --eisvogel             Use eisvogel LaTeX template (applied by default for PDF)
@@ -59,6 +60,7 @@ THEME=""
 QRCODE_URL=""
 QRCODE_BG="transparent"
 QRCODE_FG=""
+CARD_IMAGE=""
 EMOJI=false
 CJK_FONTS=true
 EISVOGEL=true
@@ -121,6 +123,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --qrcode-fg)
             QRCODE_FG="$2"
+            shift 2
+            ;;
+        --card-image)
+            CARD_IMAGE="$2"
             shift 2
             ;;
         --emoji)
@@ -220,10 +226,15 @@ if [ "$OUTPUT_IS_PDF" = true ]; then
 
     # Extract metadata from input file if it exists
     if [ -n "$INPUT_FILE" ] && [ -f "$INPUT_FILE" ]; then
-        # Extract 'source' field and use it as 'author' if author is not set
+        # Extract 'source' field and display it as 'author' (which will be shown as date position)
         SOURCE_FIELD=$(sed -n '/^---$/,/^---$/p' "$INPUT_FILE" | grep -E '^source:' | sed 's/^source:[[:space:]]*//;s/"//g;s/'\''//g' | head -1)
-        if [ -n "$SOURCE_FIELD" ]; then
-            ENHANCED_PANDOC_ARGS+=("-M" "author=$SOURCE_FIELD")
+        # Extract date field to display in author position
+        DATE_FIELD=$(sed -n '/^---$/,/^---$/p' "$INPUT_FILE" | grep -E '^date:' | sed 's/^date:[[:space:]]*//;s/"//g;s/'\''//g' | head -1)
+
+        # Swap: put date in author position, suppress original date
+        if [ -n "$DATE_FIELD" ]; then
+            ENHANCED_PANDOC_ARGS+=("-M" "author=$DATE_FIELD")
+            ENHANCED_PANDOC_ARGS+=("-M" "date=")
         fi
     fi
 
@@ -308,6 +319,28 @@ print('{:02X}{:02X}{:02X}'.format(r_new, g_new, b_new))
             if [ "$DEBUG" = true ]; then
                 echo "Debug: Emoji header generated"
             fi
+        fi
+    fi
+
+    # Handle business card image
+    if [ -n "$CARD_IMAGE" ]; then
+        if [ "$DEBUG" = true ]; then
+            echo "Debug: Adding business card: $CARD_IMAGE"
+        fi
+
+        CARD_HEADER_FILE="$TEMP_DIR/card-header.tex"
+        CARD_OUTPUT=$(python3 "$SCRIPT_DIR/generate_card_header.py" "$CARD_IMAGE" "$CARD_HEADER_FILE" 2>&1)
+        if [ $? -eq 0 ]; then
+            CARD_HEADER_PATH=$(echo "$CARD_OUTPUT" | grep "CARD_HEADER_PATH:" | cut -d':' -f2-)
+            if [ -n "$CARD_HEADER_PATH" ] && [ -f "$CARD_HEADER_PATH" ]; then
+                ENHANCED_PANDOC_ARGS+=("-H" "$CARD_HEADER_PATH")
+                if [ "$DEBUG" = true ]; then
+                    echo "Debug: Business card header generated at: $CARD_HEADER_PATH"
+                fi
+            fi
+        else
+            echo "Warning: Failed to generate business card header"
+            [ "$DEBUG" = true ] && echo "$CARD_OUTPUT"
         fi
     fi
     
