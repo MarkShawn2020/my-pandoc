@@ -261,6 +261,9 @@ if [ "$OUTPUT_IS_PDF" = true ]; then
         ENHANCED_PANDOC_ARGS+=("-V" "monofont=Menlo")
         ENHANCED_PANDOC_ARGS+=("-V" "sansfont=PingFang SC")
     fi
+
+    # Fix for pandoc 3.x table counter compatibility
+    ENHANCED_PANDOC_ARGS+=("-H" "$SCRIPT_DIR/fix_table_counter.tex")
     
     # Apply theme if specified
     if [ -n "$THEME" ]; then
